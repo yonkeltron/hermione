@@ -8,9 +8,9 @@ use crate::file_mapping::FileMapping;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Manifest {
-    name: String,
-    author: String,
-    mappings: Vec<FileMapping>,
+    pub name: String,
+    pub author: String,
+    pub mappings: Vec<FileMapping>,
 }
 
 impl Manifest {
