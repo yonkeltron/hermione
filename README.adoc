@@ -1,0 +1,5 @@
+# Hermione
+
+## Competent magic for your dotfiles and more
+
+Proudly written in Rust.
