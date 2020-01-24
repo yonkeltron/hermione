@@ -1,8 +1,12 @@
+use anyhow::{anyhow, Result};
 use colored::*;
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 use quickcheck_macros::quickcheck;
+
+use std::fs;
+use std::path::Path;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct FileMapping {
@@ -20,6 +24,39 @@ impl FileMapping {
 
     pub fn display_line(self) -> String {
         format!("{} -> {}", self.i.green(), self.o.green())
+    }
+
+    pub fn install(self, force: bool) -> Result<String> {
+        let i_path = Path::new(&self.i);
+        let o_path = Path::new(&self.o);
+
+        let copy_file = i_path.exists() && o_path.exists() && force;
+        if copy_file {
+            fs::copy(self.i, self.o)?;
+            Ok(String::from("Looks good!"))
+        } else if o_path.exists() {
+            Err(anyhow!(
+                "{} exists and you didn't tell me to overwrite",
+                o_path.display()
+            ))
+        } else {
+            Err(anyhow!(
+                "Unable to install from {} to {}",
+                i_path.display(),
+                o_path.display()
+            ))
+        }
+    }
+
+    pub fn uninstall(self) -> Result<String> {
+        let o_path = Path::new(&self.o);
+
+        if o_path.exists() && o_path.is_file() {
+            fs::remove_file(o_path)?;
+            Ok(format!("Removed {}", o_path.display()))
+        } else {
+            Err(anyhow!("Unable to remove {}", o_path.display()))
+        }
     }
 }
 
