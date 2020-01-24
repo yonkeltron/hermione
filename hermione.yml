@@ -1,6 +1,6 @@
 ---
 name: "Example Package"
 author: "J. Random Hacker"
-files:
+mappings:
   - i: Cargo.toml
     o: "{{home}}/Cargo.toml"
