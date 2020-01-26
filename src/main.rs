@@ -12,6 +12,7 @@ use crate::config::Config;
 
 fn main() -> Result<()> {
     let config = Config::load()?;
+    println!("{:#?}", config);
     fs::create_dir_all(config.hermione_home)?;
 
     match manifest::Manifest::new_from_file(String::from("hermione.yml")) {

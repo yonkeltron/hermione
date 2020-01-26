@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use home::home_dir;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub version: u16,
     pub hermione_home: String,
@@ -14,7 +14,11 @@ impl ::std::default::Default for Config {
     fn default() -> Self {
         let user_home_directory = match home_dir() {
             Some(path_buf) => {
-                let path_display = path_buf.as_path().display();
+                let canonicalized_buf = path_buf
+                    .canonicalize()
+                    .expect("Unable to determine user's home directory");
+
+                let path_display = canonicalized_buf.display();
 
                 format!("{}", path_display)
             }
@@ -22,7 +26,7 @@ impl ::std::default::Default for Config {
         };
         Self {
             version: 0,
-            hermione_home: format!("{}/{}", user_home_directory, ".local/hermione"),
+            hermione_home: format!("{}/{}", user_home_directory, ".local/share/hermione"),
         }
     }
 }
