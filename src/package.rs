@@ -2,9 +2,11 @@ use anyhow::Result;
 use fs_extra::dir;
 use git2::Repository;
 
+use std::fs;
 use std::path::Path;
 
 use crate::config::Config;
+use crate::manifest::Manifest;
 
 pub struct Package {
     pub local_path: String,
@@ -31,20 +33,43 @@ impl Package {
             source: src,
         })
     }
+
+    pub fn install(self) -> Result<usize> {
+        let manifest = Manifest::new_from_file(format!("{}/hermione.yml", &self.local_path))?;
+
+        let mapping_length = manifest.mappings.len();
+
+        for mapping in manifest.mappings {
+            mapping.install(false)?;
+        }
+
+        Ok(mapping_length)
+    }
+
+    pub fn uninstall(&self) -> Result<usize> {
+        let manifest = Manifest::new_from_file(format!("{}/hermione.yml", &self.local_path))?;
+
+        let mapping_length = manifest.mappings.len();
+
+        for mapping in manifest.mappings {
+            mapping.uninstall()?;
+        }
+
+        Ok(mapping_length)
+    }
+
+    pub fn remove(self) -> Result<usize> {
+        let files_removed = self.uninstall()?;
+
+        fs::remove_dir_all(&self.local_path)?;
+
+        Ok(files_removed)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // #[test]
-    // fn test_new_with_remote() {
-    //     let src = String::from("yonkeltron/hermione");
-
-    //     let package = Package::new(src, confy::load("hermione").unwrap()).unwrap();
-
-    //     assert!(Path::new(&package.local_path).is_dir());
-    // }
 
     #[test]
     fn test_new_with_local() {
@@ -53,5 +78,7 @@ mod tests {
         let package = Package::new(src, confy::load("hermione").unwrap()).unwrap();
 
         assert!(Path::new(&package.local_path).is_dir());
+
+        package.remove().expect("Unable to clean up after test");
     }
 }
