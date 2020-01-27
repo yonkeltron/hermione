@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
@@ -32,6 +33,17 @@ impl ::std::default::Default for Config {
 }
 
 impl Config {
+    pub fn init_hermione_home(&self) -> Result<String> {
+        match fs::create_dir_all(&self.hermione_home) {
+            Ok(_) => Ok(self.hermione_home.clone()),
+            Err(e) => Err(anyhow!(
+                "Unable to initialize Hermione home at {} because {}",
+                self.hermione_home,
+                e
+            )),
+        }
+    }
+
     pub fn load() -> Result<Config> {
         match confy::load("hermione") {
             Ok(config) => Ok(config),
