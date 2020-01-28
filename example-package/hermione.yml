@@ -2,5 +2,7 @@
 name: "Example Package"
 author: "J. Random Hacker"
 mappings:
-  - i: Cargo.toml
-    o: "home-Cargo.toml"
+  - i: a.txt
+    o: panda.txt
+  - i: b.txt
+    o: bamboo.txt

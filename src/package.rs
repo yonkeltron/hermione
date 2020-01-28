@@ -54,7 +54,8 @@ impl Package {
         let mapping_length = manifest.mappings.len();
 
         for mapping in manifest.mappings {
-            mapping.install(false)?;
+            let activity_line = mapping.install(false)?;
+            println!("{}", activity_line);
         }
 
         Ok(mapping_length)

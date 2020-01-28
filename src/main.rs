@@ -57,7 +57,8 @@ fn main() -> Result<()> {
                 .expect("No arg matches for install")
                 .value_of("SOURCE")
                 .expect("Unable to read source");
-            Package::new_from_source(String::from(package_source), config)?;
+            let package = Package::new_from_source(String::from(package_source), config)?;
+            package.install()?;
         }
         (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),
     };
