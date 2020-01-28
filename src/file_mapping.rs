@@ -55,7 +55,7 @@ impl FileMapping {
             fs::remove_file(o_path)?;
             Ok(format!("Removed {}", o_path.display()))
         } else {
-            Err(anyhow!("Unable to remove {}", o_path.display()))
+            Ok(format!("Unable to remove {}", o_path.display()))
         }
     }
 }

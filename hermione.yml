@@ -3,4 +3,4 @@ name: "Example Package"
 author: "J. Random Hacker"
 mappings:
   - i: Cargo.toml
-    o: "{{home}}/Cargo.toml"
+    o: "home-Cargo.toml"
