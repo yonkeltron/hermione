@@ -58,7 +58,11 @@ fn main() -> Result<()> {
                 .expect("unable to read package name");
             let package = Package::new_from_package_name(package_name, &config);
 
-            package.remove()?;
+            if package.is_installed() {
+                package.remove()?;
+            } else {
+                println!("Package '{}' doesn't appear to be installed", package_name);
+            }
         }
         ("install", Some(install_matches)) => {
             let package_source = install_matches
