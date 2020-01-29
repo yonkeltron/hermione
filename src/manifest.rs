@@ -23,7 +23,10 @@ impl Manifest {
 
             Ok(manifest)
         } else {
-            Err(anyhow!("Looks like {} is not a file", path.display()))
+            Err(anyhow!(
+                "Looks like {} is not a file",
+                path_to_manifest_file
+            ))
         }
     }
 }

@@ -52,37 +52,22 @@ fn main() -> Result<()> {
         ("init", _init_matches) => {
             config.init_hermione_home()?;
         }
-        ("remove", remove_matches) => {
-            let package = Package::new_from_package_name(
-                remove_matches
-                    .expect("No arg matches for remove")
-                    .value_of("PACKAGE")
-                    .expect("unable to read package name"),
-                &config,
-            );
+        ("remove", Some(remove_matches)) => {
+            let package_name = remove_matches
+                .value_of("PACKAGE")
+                .expect("unable to read package name");
+            let package = Package::new_from_package_name(package_name, &config);
 
-            if package.is_installed() {
-                package.uninstall()?;
-            }
+            package.remove()?;
         }
-        ("install", install_matches) => {
+        ("install", Some(install_matches)) => {
             let package_source = install_matches
-                .expect("No arg matches for install")
                 .value_of("SOURCE")
                 .expect("Unable to read source");
             let package = Package::new_from_source(String::from(package_source), &config)?;
             package.install()?;
         }
         (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),
-    };
-
-    match manifest::Manifest::new_from_file(String::from("hermione.yml")) {
-        Ok(manifest) => {
-            for mapping in manifest.mappings {
-                println!("{}", mapping.display_line());
-            }
-        }
-        Err(e) => eprintln!("{}", e.to_string()),
     };
 
     Ok(())
