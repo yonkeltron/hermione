@@ -1,8 +1,6 @@
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 
-use std::fs;
-
 mod config;
 mod file_mapping;
 mod manifest;
@@ -38,7 +36,13 @@ fn main() -> Result<()> {
             SubCommand::with_name("remove")
                 .about("removes Hermione entirely")
                 .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS")),
+                .author(env!("CARGO_PKG_AUTHORS"))
+                .arg(
+                    Arg::with_name("PACKAGE")
+                        .help("name of installed package")
+                        .required(true)
+                        .index(1),
+                ),
         )
         .get_matches();
 
@@ -46,18 +50,27 @@ fn main() -> Result<()> {
 
     match matches.subcommand() {
         ("init", _init_matches) => {
-            println!("{:#?}", config);
-            fs::create_dir_all(config.hermione_home)?;
+            config.init_hermione_home()?;
         }
-        ("remove", _remove_matches) => {
-            fs::remove_dir_all(config.hermione_home)?;
+        ("remove", remove_matches) => {
+            let package = Package::new_from_package_name(
+                remove_matches
+                    .expect("No arg matches for remove")
+                    .value_of("PACKAGE")
+                    .expect("unable to read package name"),
+                &config,
+            );
+
+            if package.is_installed() {
+                package.uninstall()?;
+            }
         }
         ("install", install_matches) => {
             let package_source = install_matches
                 .expect("No arg matches for install")
                 .value_of("SOURCE")
                 .expect("Unable to read source");
-            let package = Package::new_from_source(String::from(package_source), config)?;
+            let package = Package::new_from_source(String::from(package_source), &config)?;
             package.install()?;
         }
         (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),

@@ -14,7 +14,7 @@ pub struct Package {
 }
 
 impl Package {
-    pub fn new_from_source(src: String, config: Config) -> Result<Self> {
+    pub fn new_from_source(src: String, config: &Config) -> Result<Self> {
         let path = Path::new(&src).canonicalize()?;
         let package_name = Self::source_to_package_name(&src);
         let checkout_path = Self::install_path(&config.hermione_home, &package_name);
@@ -31,6 +31,11 @@ impl Package {
         };
 
         Ok(Self::new(&local_path, &src))
+    }
+
+    pub fn new_from_package_name(package_name: &str, config: &Config) -> Self {
+        let local_path = Self::install_path(&config.hermione_home, package_name);
+        Self::new(&local_path, "UNSPECIFIED_SOURCE")
     }
 
     pub fn new(local_path: &str, source: &str) -> Self {
@@ -124,15 +129,16 @@ mod tests {
             .init_hermione_home()
             .expect("Unable to init Hermione home in test");
 
-        let package = Package::new_from_source(src, config).expect("Unable to instantiate package");
+        let package =
+            Package::new_from_source(src, &config).expect("Unable to instantiate package");
 
-        let local_path = package.local_path.clone();
-
-        assert!(Path::new(&local_path).is_dir());
+        let should_be_installed = package.is_installed();
 
         package.remove().expect("Unable to clean up after test");
 
-        assert!(!Path::new(&local_path).is_dir());
+        let should_not_be_installed = !package.is_installed();
+
+        assert_eq!(should_be_installed, should_not_be_installed);
     }
 
     #[test]
@@ -156,11 +162,32 @@ mod tests {
             .init_hermione_home()
             .expect("Unable to init Hermione home in test");
 
-        let package = Package::new_from_source(src, config).expect("Unable to instantiate package");
-        assert!(package.is_installed());
+        let package =
+            Package::new_from_source(src, &config).expect("Unable to instantiate package");
+        let should_be_installed = package.is_installed();
 
         package.remove().expect("Unable to clean up after test");
 
-        assert!(!package.is_installed());
+        let should_not_be_installed = !package.is_installed();
+
+        assert_eq!(should_be_installed, should_not_be_installed);
+    }
+
+    #[test]
+    fn test_new_from_package_name() {
+        let src = String::from("./example-package");
+
+        let config = Config::load().expect("Unable to load config in test");
+        config
+            .init_hermione_home()
+            .expect("Unable to init Hermione home in test");
+
+        let package_a =
+            Package::new_from_source(src, &config).expect("Unable to instantiate package");
+        package_a.remove().expect("Unable to clean up after test");
+
+        let package_b = Package::new_from_package_name("example-package", &config);
+
+        assert_eq!(package_a.local_path, package_b.local_path);
     }
 }
