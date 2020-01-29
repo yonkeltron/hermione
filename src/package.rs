@@ -2,7 +2,6 @@ use anyhow::Result;
 use fs_extra::dir;
 use git2::Repository;
 
-use std::env;
 use std::fs;
 use std::path::Path;
 
@@ -15,10 +14,10 @@ pub struct Package {
 }
 
 impl Package {
-    pub fn new_from_source(src: String, config: Config) -> Result<Package> {
+    pub fn new_from_source(src: String, config: Config) -> Result<Self> {
         let path = Path::new(&src).canonicalize()?;
         let package_name = Self::source_to_package_name(&src);
-        let checkout_path = format!("{}/{}", &config.hermione_home, package_name);
+        let checkout_path = Self::install_path(&config.hermione_home, &package_name);
         let dest_path = Path::new(&checkout_path);
 
         let local_path = if path.is_dir() {
@@ -31,10 +30,14 @@ impl Package {
             format!("{}", package_name)
         };
 
-        Ok(Package {
-            local_path: local_path,
-            source: src,
-        })
+        Ok(Self::new(&local_path, &src))
+    }
+
+    pub fn new(local_path: &str, source: &str) -> Self {
+        Package {
+            local_path: String::from(local_path),
+            source: String::from(source),
+        }
     }
 
     fn source_to_package_name(src: &str) -> String {
@@ -48,7 +51,17 @@ impl Package {
         package_name
     }
 
-    pub fn install(self) -> Result<usize> {
+    fn install_path(hermione_home: &str, package_name: &str) -> String {
+        let path = Path::new(hermione_home).join(package_name);
+
+        String::from(path.to_string_lossy())
+    }
+
+    pub fn is_installed(&self) -> bool {
+        Path::new(&self.local_path).is_dir()
+    }
+
+    pub fn install(&self) -> Result<usize> {
         let manifest = Manifest::new_from_file(format!("{}/hermione.yml", &self.local_path))?;
 
         let mapping_length = manifest.mappings.len();
@@ -106,7 +119,7 @@ mod tests {
     fn test_from_source_with_local() {
         let src = String::from("./example-package");
 
-        let config = Config::load().expect("Unable to load config");
+        let config = Config::load().expect("Unable to load config in test");
         config
             .init_hermione_home()
             .expect("Unable to init Hermione home in test");
@@ -120,5 +133,34 @@ mod tests {
         package.remove().expect("Unable to clean up after test");
 
         assert!(!Path::new(&local_path).is_dir());
+    }
+
+    #[test]
+    fn test_install_path() {
+        let package_name = "panda";
+        let hermione_home = "bamboo";
+
+        let actual = Package::install_path(hermione_home, package_name);
+
+        let expected = String::from("bamboo/panda");
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_is_installed() {
+        let src = String::from("./example-package");
+
+        let config = Config::load().expect("Unable to load config in test");
+        config
+            .init_hermione_home()
+            .expect("Unable to init Hermione home in test");
+
+        let package = Package::new_from_source(src, config).expect("Unable to instantiate package");
+        assert!(package.is_installed());
+
+        package.remove().expect("Unable to clean up after test");
+
+        assert!(!package.is_installed());
     }
 }
