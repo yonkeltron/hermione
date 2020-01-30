@@ -2,12 +2,10 @@ use anyhow::Result;
 use fs_extra::dir;
 use git2::Repository;
 
-use std::fs;
 use std::path::Path;
 
 use crate::config::Config;
 use crate::downloaded_package::DownloadedPackage;
-use crate::manifest::Manifest;
 
 pub struct Package {
     pub local_path: String,
@@ -32,13 +30,8 @@ impl Package {
         };
 
         Ok(DownloadedPackage {
-            local_path: Path::new(&local_path),
+            local_path: Path::new(&local_path).to_path_buf(),
         })
-    }
-
-    pub fn new_from_package_name(package_name: &str, config: &Config) -> Self {
-        let local_path = Self::install_path(&config.hermione_home, package_name);
-        Self::new(&local_path, "UNSPECIFIED_SOURCE")
     }
 
     pub fn new(local_path: &str, source: &str) -> Self {
@@ -110,22 +103,5 @@ mod tests {
         let expected = String::from("bamboo/panda");
 
         assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_new_from_package_name() {
-        let src = String::from("./example-package");
-
-        let config = Config::load().expect("Unable to load config in test");
-        config
-            .init_hermione_home()
-            .expect("Unable to init Hermione home in test");
-
-        let package_a = Package::download(src, &config).expect("Unable to instantiate package");
-        package_a.remove().expect("Unable to clean up after test");
-
-        let package_b = Package::new_from_package_name("example-package", &config);
-
-        assert_eq!(package_a.local_path, package_b.local_path);
     }
 }

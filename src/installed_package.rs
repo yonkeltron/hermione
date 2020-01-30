@@ -1,33 +1,32 @@
 use anyhow::Result;
 
 use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 
 use crate::manifest::Manifest;
 
 pub struct InstalledPackage {
-    local_path: Path,
+    pub local_path: PathBuf,
 }
 
 impl InstalledPackage {
-    pub fn uninstall(&self) -> Result<usize> {
-        let manifest =
-            Manifest::new_from_file(format!("{}/hermione.yml", &self.local_path.display()))?;
-
-        let mapping_length = manifest.mappings.len();
+    pub fn uninstall(&self) -> Result<bool> {
+        let manifest_path = self.local_path.join("hermione.yml");
+        let manifest_path_string = format!("{}", manifest_path.display());
+        let manifest = Manifest::new_from_file(&manifest_path_string)?;
 
         for mapping in manifest.mappings {
             mapping.uninstall()?;
         }
 
-        Ok(mapping_length)
+        Ok(true)
     }
 
-    pub fn remove(&self) -> Result<usize> {
+    pub fn remove(&self) -> Result<bool> {
         let files_removed = self.uninstall()?;
 
         fs::remove_dir_all(&self.local_path)?;
 
-        Ok(files_removed)
+        Ok(true)
     }
 }
