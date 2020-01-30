@@ -2,7 +2,9 @@ use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 
 mod config;
+mod downloaded_package;
 mod file_mapping;
+mod installed_package;
 mod manifest;
 mod package;
 
@@ -53,22 +55,17 @@ fn main() -> Result<()> {
             config.init_hermione_home()?;
         }
         ("remove", Some(remove_matches)) => {
-            let package_name = remove_matches
-                .value_of("PACKAGE")
-                .expect("unable to read package name");
-            let package = Package::new_from_package_name(package_name, &config);
-
-            if package.is_installed() {
-                package.remove()?;
-            } else {
-                println!("Package '{}' doesn't appear to be installed", package_name);
-            }
+            unimplemented!();
+            //     let package_name = remove_matches
+            //         .value_of("PACKAGE")
+            //         .expect("unable to read package name");
+            //     let package = Package::new_from_package_name(package_name, &config);
         }
         ("install", Some(install_matches)) => {
             let package_source = install_matches
                 .value_of("SOURCE")
                 .expect("Unable to read source");
-            let package = Package::new_from_source(String::from(package_source), &config)?;
+            let package = Package::download(String::from(package_source), &config)?;
             package.install()?;
         }
         (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),

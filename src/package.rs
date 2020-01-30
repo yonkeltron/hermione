@@ -6,6 +6,7 @@ use std::fs;
 use std::path::Path;
 
 use crate::config::Config;
+use crate::downloaded_package::DownloadedPackage;
 use crate::manifest::Manifest;
 
 pub struct Package {
@@ -14,7 +15,7 @@ pub struct Package {
 }
 
 impl Package {
-    pub fn new_from_source(src: String, config: &Config) -> Result<Self> {
+    pub fn download(src: String, config: &Config) -> Result<DownloadedPackage> {
         let path = Path::new(&src).canonicalize()?;
         let package_name = Self::source_to_package_name(&src);
         let checkout_path = Self::install_path(&config.hermione_home, &package_name);
@@ -30,7 +31,9 @@ impl Package {
             format!("{}", package_name)
         };
 
-        Ok(Self::new(&local_path, &src))
+        Ok(DownloadedPackage {
+            local_path: Path::new(&local_path),
+        })
     }
 
     pub fn new_from_package_name(package_name: &str, config: &Config) -> Self {
@@ -61,43 +64,6 @@ impl Package {
 
         String::from(path.to_string_lossy())
     }
-
-    pub fn is_installed(&self) -> bool {
-        Path::new(&self.local_path).is_dir()
-    }
-
-    pub fn install(&self) -> Result<usize> {
-        let manifest = Manifest::new_from_file(format!("{}/hermione.yml", &self.local_path))?;
-
-        let mapping_length = manifest.mappings.len();
-
-        for mapping in manifest.mappings {
-            let activity_line = mapping.install(false)?;
-            println!("{}", activity_line);
-        }
-
-        Ok(mapping_length)
-    }
-
-    pub fn uninstall(&self) -> Result<usize> {
-        let manifest = Manifest::new_from_file(format!("{}/hermione.yml", &self.local_path))?;
-
-        let mapping_length = manifest.mappings.len();
-
-        for mapping in manifest.mappings {
-            mapping.uninstall()?;
-        }
-
-        Ok(mapping_length)
-    }
-
-    pub fn remove(&self) -> Result<usize> {
-        let files_removed = self.uninstall()?;
-
-        fs::remove_dir_all(&self.local_path)?;
-
-        Ok(files_removed)
-    }
 }
 
 #[cfg(test)]
@@ -121,7 +87,7 @@ mod tests {
     }
 
     #[test]
-    fn test_from_source_with_local() {
+    fn test_download() {
         let src = String::from("./example-package");
 
         let config = Config::load().expect("Unable to load config in test");
@@ -129,16 +95,9 @@ mod tests {
             .init_hermione_home()
             .expect("Unable to init Hermione home in test");
 
-        let package =
-            Package::new_from_source(src, &config).expect("Unable to instantiate package");
-
-        let should_be_installed = package.is_installed();
-
+        let package = Package::download(src, &config).expect("Unable to instantiate package");
+        assert!(package.local_path.is_dir());
         package.remove().expect("Unable to clean up after test");
-
-        let should_not_be_installed = !package.is_installed();
-
-        assert_eq!(should_be_installed, should_not_be_installed);
     }
 
     #[test]
@@ -154,26 +113,6 @@ mod tests {
     }
 
     #[test]
-    fn test_is_installed() {
-        let src = String::from("./example-package");
-
-        let config = Config::load().expect("Unable to load config in test");
-        config
-            .init_hermione_home()
-            .expect("Unable to init Hermione home in test");
-
-        let package =
-            Package::new_from_source(src, &config).expect("Unable to instantiate package");
-        let should_be_installed = package.is_installed();
-
-        package.remove().expect("Unable to clean up after test");
-
-        let should_not_be_installed = !package.is_installed();
-
-        assert_eq!(should_be_installed, should_not_be_installed);
-    }
-
-    #[test]
     fn test_new_from_package_name() {
         let src = String::from("./example-package");
 
@@ -182,8 +121,7 @@ mod tests {
             .init_hermione_home()
             .expect("Unable to init Hermione home in test");
 
-        let package_a =
-            Package::new_from_source(src, &config).expect("Unable to instantiate package");
+        let package_a = Package::download(src, &config).expect("Unable to instantiate package");
         package_a.remove().expect("Unable to clean up after test");
 
         let package_b = Package::new_from_package_name("example-package", &config);
