@@ -22,8 +22,8 @@ impl InstalledPackage {
         Ok(true)
     }
 
-    pub fn remove(&self) -> Result<bool> {
-        let files_removed = self.uninstall()?;
+    pub fn remove(self) -> Result<bool> {
+        self.uninstall()?;
 
         fs::remove_dir_all(&self.local_path)?;
 
