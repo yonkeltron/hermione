@@ -7,10 +7,7 @@ use std::path::Path;
 use crate::config::Config;
 use crate::downloaded_package::DownloadedPackage;
 
-pub struct Package {
-    pub local_path: String,
-    pub source: String,
-}
+pub struct Package {}
 
 impl Package {
     pub fn download(src: String, config: &Config) -> Result<DownloadedPackage> {
@@ -32,13 +29,6 @@ impl Package {
         Ok(DownloadedPackage {
             local_path: Path::new(&local_path).to_path_buf(),
         })
-    }
-
-    pub fn new(local_path: &str, source: &str) -> Self {
-        Package {
-            local_path: String::from(local_path),
-            source: String::from(source),
-        }
     }
 
     fn source_to_package_name(src: &str) -> String {

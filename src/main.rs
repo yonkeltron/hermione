@@ -54,7 +54,7 @@ fn main() -> Result<()> {
         ("init", _init_matches) => {
             config.init_hermione_home()?;
         }
-        ("remove", Some(remove_matches)) => {
+        ("remove", Some(_remove_matches)) => {
             unimplemented!();
             //     let package_name = remove_matches
             //         .value_of("PACKAGE")
