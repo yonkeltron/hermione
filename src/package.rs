@@ -33,12 +33,10 @@ impl Package {
     fn source_to_package_name(src: &str) -> String {
         let path = Path::new(src);
 
-        let package_name = match path.file_stem() {
+        match path.file_stem() {
             Some(stem) => String::from(stem.to_string_lossy()),
             None => String::from("UNKNOWN_PACKAGE"),
-        };
-
-        package_name
+        }
     }
 
     pub fn install_path(hermione_home: &str, package_name: &str) -> PathBuf {
