@@ -25,9 +25,4 @@ impl DownloadedPackage {
             local_path: self.local_path,
         })
     }
-
-    pub fn remove(self) -> Result<()> {
-        fs::remove_dir_all(self.local_path)?;
-        Ok(())
-    }
 }
