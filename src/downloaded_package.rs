@@ -1,6 +1,5 @@
 use anyhow::Result;
 
-use std::fs;
 use std::path::PathBuf;
 
 use crate::installed_package::InstalledPackage;
