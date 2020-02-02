@@ -48,6 +48,8 @@ impl Package {
 mod tests {
     use super::*;
 
+    use std::fs;
+
     #[test]
     fn test_source_to_package_name_with_url() {
         let input = "http://github.com/panda/bamboo.git";
@@ -75,7 +77,7 @@ mod tests {
 
         let package = Package::download(src, &config).expect("Unable to instantiate package");
         assert!(package.local_path.is_dir());
-        package.remove().expect("Unable to clean up after test");
+        fs::remove_dir_all(package.local_path).expect("Unable to remove package in test");
     }
 
     #[test]

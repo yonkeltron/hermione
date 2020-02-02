@@ -71,6 +71,6 @@ mod tests {
 
         assert!(InstalledPackage::from_package_name(home, name).is_ok());
 
-        package.remove().expect("Unable to remove package in test");
+        fs::remove_dir_all(package.local_path).expect("Unable to remove package in test");
     }
 }
