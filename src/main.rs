@@ -9,6 +9,7 @@ mod manifest;
 mod package;
 
 use crate::config::Config;
+use crate::installed_package::InstalledPackage;
 use crate::package::Package;
 
 fn main() -> Result<()> {
@@ -54,12 +55,22 @@ fn main() -> Result<()> {
         ("init", _init_matches) => {
             config.init_hermione_home()?;
         }
-        ("remove", Some(_remove_matches)) => {
-            unimplemented!();
-            //     let package_name = remove_matches
-            //         .value_of("PACKAGE")
-            //         .expect("unable to read package name");
-            //     let package = Package::new_from_package_name(package_name, &config);
+        ("remove", Some(remove_matches)) => {
+            let package_name = remove_matches
+                .value_of("PACKAGE")
+                .expect("unable to read package name");
+
+            let name = String::from(package_name);
+            let remove_result =
+                match InstalledPackage::from_package_name(config.hermione_home, name.clone()) {
+                    Ok(package) => package.remove(),
+                    Err(e) => Err(e),
+                };
+
+            match remove_result {
+                Ok(_success) => println!("Removed package {}", name),
+                Err(e) => eprintln!("Unable to remove {} because {}", name, e.to_string()),
+            }
         }
         ("install", Some(install_matches)) => {
             let package_source = install_matches

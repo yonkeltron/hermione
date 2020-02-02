@@ -2,7 +2,7 @@ use anyhow::Result;
 use fs_extra::dir;
 use git2::Repository;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::config::Config;
 use crate::downloaded_package::DownloadedPackage;
@@ -22,8 +22,7 @@ impl Package {
             checkout_path
         } else {
             let repo = Repository::clone(&src, dest_path)?;
-            let package_name = repo.path().display();
-            format!("{}", package_name)
+            repo.path().to_path_buf()
         };
 
         Ok(DownloadedPackage {
@@ -42,10 +41,8 @@ impl Package {
         package_name
     }
 
-    fn install_path(hermione_home: &str, package_name: &str) -> String {
-        let path = Path::new(hermione_home).join(package_name);
-
-        String::from(path.to_string_lossy())
+    pub fn install_path(hermione_home: &str, package_name: &str) -> PathBuf {
+        Path::new(hermione_home).join(package_name).to_path_buf()
     }
 }
 
@@ -90,7 +87,7 @@ mod tests {
 
         let actual = Package::install_path(hermione_home, package_name);
 
-        let expected = String::from("bamboo/panda");
+        let expected = Path::new("bamboo/panda").to_path_buf();
 
         assert_eq!(expected, actual);
     }
