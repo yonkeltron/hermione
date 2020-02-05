@@ -4,6 +4,7 @@ use clap::{App, Arg, SubCommand};
 mod config;
 mod downloaded_package;
 mod file_mapping;
+mod file_mapping_definition;
 mod installed_package;
 mod manifest;
 mod package;

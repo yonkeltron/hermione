@@ -15,7 +15,8 @@ impl DownloadedPackage {
         let manifest_path_string = format!("{}", manifest_path.display());
         let manifest = Manifest::new_from_file(&manifest_path_string)?;
 
-        for mapping in manifest.mappings {
+        for mapping_definition in manifest.mappings {
+            let mapping = mapping_definition.to_file_mapping()?;
             let activity_line = mapping.install(false)?;
             println!("{}", activity_line);
         }

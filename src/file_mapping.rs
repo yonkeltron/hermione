@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 use colored::*;
-use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 use quickcheck_macros::quickcheck;
@@ -8,13 +7,17 @@ use quickcheck_macros::quickcheck;
 use std::fs;
 use std::path::Path;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct FileMapping {
     i: String,
     o: String,
 }
 
 impl FileMapping {
+    pub fn new(i: String, o: String) -> Self {
+        Self { i: i, o: o }
+    }
+
     pub fn display_line(&self) -> String {
         format!("{} -> {}", self.i.green(), self.o.green())
     }

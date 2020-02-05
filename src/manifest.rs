@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 
-use crate::file_mapping::FileMapping;
+use crate::file_mapping_definition::FileMappingDefinition;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Manifest {
     pub name: String,
     pub author: String,
-    pub mappings: Vec<FileMapping>,
+    pub mappings: Vec<FileMappingDefinition>,
 }
 
 impl Manifest {
