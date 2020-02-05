@@ -11,7 +11,7 @@ pub struct FileMappingDefinition {
 }
 
 impl FileMappingDefinition {
-    pub fn to_file_mapping(self) -> Result<FileMapping> {
+    pub fn render_file_mapping(self) -> Result<FileMapping> {
         let context = Context::new();
         match Tera::one_off(&self.o, &context, true) {
             Ok(o) => Ok(FileMapping::new(self.i, o)),

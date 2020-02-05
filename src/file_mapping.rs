@@ -15,7 +15,7 @@ pub struct FileMapping {
 
 impl FileMapping {
     pub fn new(i: String, o: String) -> Self {
-        Self { i: i, o: o }
+        Self { i, o }
     }
 
     pub fn display_line(&self) -> String {

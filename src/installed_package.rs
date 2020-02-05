@@ -29,7 +29,7 @@ impl InstalledPackage {
         let manifest = Manifest::new_from_file(&manifest_path_string)?;
 
         for mapping_definition in manifest.mappings {
-            let mapping = mapping_definition.to_file_mapping()?;
+            let mapping = mapping_definition.render_file_mapping()?;
             mapping.uninstall()?;
         }
 
