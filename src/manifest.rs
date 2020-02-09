@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 
 use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 
 use crate::file_mapping_definition::FileMappingDefinition;
 
@@ -14,9 +14,7 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    pub fn new_from_file(path_to_manifest_file: &str) -> Result<Manifest> {
-        let path = Path::new(path_to_manifest_file);
-
+    pub fn new_from_path(path: PathBuf) -> Result<Manifest> {
         if path.is_file() {
             let yaml = fs::read_to_string(path)?;
             let manifest: Manifest = serde_yaml::from_str(&yaml)?;
@@ -25,7 +23,7 @@ impl Manifest {
         } else {
             Err(anyhow!(
                 "Looks like {} is not a file",
-                path_to_manifest_file
+                path.display()
             ))
         }
     }

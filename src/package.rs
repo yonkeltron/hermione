@@ -1,31 +1,57 @@
 use anyhow::{anyhow, Result};
 use directories::ProjectDirs;
 use fs_extra::dir;
-use git2::Repository;
 
 use std::path::{Path, PathBuf};
 
-use crate::config::Config;
 use crate::downloaded_package::DownloadedPackage;
-
-pub struct Package {}
 
 const QUALIFIER: &str = "dev";
 const ORGANIZATION: &str = "hermione";
 const APPLICATION: &str = "herm";
 
+pub struct Package {
+    pub project_dirs: ProjectDirs,
+}
+
 impl Package {
-    pub fn download_dir() -> Result<PathBuf> {
+    pub fn new() -> Result<Self> {
+        Ok(Self {
+            project_dirs: Self::project_dirs()?,
+        })
+    }
+
+    pub fn download_dir(&self) -> PathBuf {
+        self.project_dirs.cache_dir().to_path_buf()
+    }
+
+    pub fn install_dir(&self) -> PathBuf {
+        self.project_dirs.data_dir().to_path_buf()
+    }
+
+    pub fn installed_package_path(&self, package_name: &str) -> Result<PathBuf> {
+        let path = self.install_dir().join(package_name);
+        if path.is_dir() {
+            Ok(path)
+        } else {
+            Err(anyhow!("It appears that {} isn't installed.", package_name))
+        }
+    }
+
+    pub fn project_dirs() -> Result<ProjectDirs> {
         match ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION) {
-            Some(pd) => Ok(pd.cache_dir().to_path_buf()),
+            Some(pd) => Ok(pd),
             None => Err(anyhow!("Unable to determine directory structure.")),
         }
     }
 
-    pub fn download(src: String, config: &Config) -> Result<DownloadedPackage> {
+    pub fn download(src: String) -> Result<DownloadedPackage> {
+        let package = Self {
+            project_dirs: Self::project_dirs()?,
+        };
         let path = Path::new(&src).canonicalize()?;
         let package_name = Self::source_to_package_name(&src);
-        let checkout_path = Self::download_dir()?.join(&package_name);
+        let checkout_path = package.download_dir().join(&package_name);
 
         if path.is_dir() {
             println!(
@@ -34,11 +60,12 @@ impl Package {
                 checkout_path.display()
             );
             let options = dir::CopyOptions::new();
-            dir::copy(&path, &config.hermione_home, &options)?;
+            dir::copy(&path, &checkout_path, &options)?;
             let local_path = checkout_path;
             Ok(DownloadedPackage {
                 local_path: Path::new(&local_path).to_path_buf(),
                 package_name,
+                package_service: package,
             })
         } else {
             // let repo = Repository::clone(&src, dest_path)?;
@@ -57,10 +84,6 @@ impl Package {
             Some(stem) => String::from(stem.to_string_lossy()),
             None => String::from("UNKNOWN_PACKAGE"),
         }
-    }
-
-    pub fn install_path(hermione_home: &str, package_name: &str) -> PathBuf {
-        Path::new(hermione_home).join(package_name).to_path_buf()
     }
 }
 
@@ -90,12 +113,7 @@ mod tests {
     fn test_download() {
         let src = String::from("./example-package");
 
-        let config = Config::load().expect("Unable to load config in test");
-        config
-            .init_hermione_home()
-            .expect("Unable to init Hermione home in test");
-
-        let package = Package::download(src, &config).expect("Unable to instantiate package");
+        let package = Package::download(src).expect("Unable to instantiate package");
         assert!(package.local_path.is_dir());
         fs::remove_dir_all(package.local_path).expect("Unable to remove package in test");
     }
@@ -103,11 +121,13 @@ mod tests {
     #[test]
     fn test_install_path() {
         let package_name = "panda";
-        let hermione_home = "bamboo";
 
-        let actual = Package::install_path(hermione_home, package_name);
+        let package = Package::new().expect("Could not create package service");
+        let actual = package
+            .installed_package_path(package_name)
+            .expect("Package is not installed");
 
-        let expected = Path::new("bamboo/panda").to_path_buf();
+        let expected = Path::new("panda").to_path_buf();
 
         assert_eq!(expected, actual);
     }

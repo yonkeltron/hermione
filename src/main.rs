@@ -63,7 +63,7 @@ fn main() -> Result<()> {
 
             let name = String::from(package_name);
             let remove_result =
-                match InstalledPackage::from_package_name(config.hermione_home, name.clone()) {
+                match InstalledPackage::from_package_name(name.clone()) {
                     Ok(package) => package.remove(),
                     Err(e) => Err(e),
                 };
@@ -77,7 +77,7 @@ fn main() -> Result<()> {
             let package_source = install_matches
                 .value_of("SOURCE")
                 .expect("Unable to read source");
-            let package = Package::download(String::from(package_source), &config)?;
+            let package = Package::download(String::from(package_source))?;
             package.install()?;
         }
         (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),
