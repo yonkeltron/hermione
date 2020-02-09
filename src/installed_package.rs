@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 use std::fs;
 use std::path::PathBuf;
@@ -8,25 +8,25 @@ use crate::package::Package;
 
 pub struct InstalledPackage {
     pub local_path: PathBuf,
+    pub package_name: String,
+    pub package_service: Package,
 }
 
 impl InstalledPackage {
-    pub fn from_package_name(hermione_home: String, name: String) -> Result<Self> {
-        let package_path = Package::install_path(&hermione_home, &name);
+    pub fn from_package_name(name: String) -> Result<Self> {
+        let package_service = Package::new()?;
+        let package_path = package_service.installed_package_path(&name)?;
 
-        if package_path.is_dir() {
-            Ok(InstalledPackage {
-                local_path: package_path,
-            })
-        } else {
-            Err(anyhow!("It appears that {} isn't installed", name))
-        }
+        Ok(InstalledPackage {
+            local_path: package_path,
+            package_name: name,
+            package_service,
+        })
     }
 
     pub fn uninstall(&self) -> Result<bool> {
         let manifest_path = self.local_path.join("hermione.yml");
-        let manifest_path_string = format!("{}", manifest_path.display());
-        let manifest = Manifest::new_from_file(&manifest_path_string)?;
+        let manifest = Manifest::new_from_path(manifest_path)?;
 
         for mapping_definition in manifest.mappings {
             let mapping = mapping_definition.render_file_mapping()?;
@@ -51,26 +51,17 @@ mod tests {
 
     use quickcheck_macros::quickcheck;
 
-    use crate::config::Config;
-
     #[quickcheck]
-    fn from_package_name_with_bogus_package_always_fails(home: String, name: String) -> bool {
-        InstalledPackage::from_package_name(home, name).is_err()
+    fn from_package_name_with_bogus_package_always_fails(name: String) -> bool {
+        InstalledPackage::from_package_name(name).is_err()
     }
 
     #[test]
     fn test_from_package_name_with_real_name() {
-        let config = Config::load().expect("Unable to load config in test");
-        config
-            .init_hermione_home()
-            .expect("Unable to init Hermione home in test");
-
-        let home = config.hermione_home.clone();
         let name = String::from("example-package");
-        let package =
-            Package::download(name.clone(), &config).expect("Unable to install package in test");
+        let package = Package::download(name.clone()).expect("Unable to install package in test");
 
-        assert!(InstalledPackage::from_package_name(home, name).is_ok());
+        assert!(InstalledPackage::from_package_name(name).is_ok());
 
         fs::remove_dir_all(package.local_path).expect("Unable to remove package in test");
     }
