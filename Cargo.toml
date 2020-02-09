@@ -25,6 +25,7 @@ home = "0.5.3"
 serde = { version = "1.0.104", features = ["derive"] }
 serde_yaml = "0.8"
 tera = "1"
+directories = "2.0.2"
 
 [dev-dependencies]
 quickcheck = "0.9"

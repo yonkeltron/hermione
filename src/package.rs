@@ -1,4 +1,5 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use directories::ProjectDirs;
 use fs_extra::dir;
 use git2::Repository;
 
@@ -9,25 +10,44 @@ use crate::downloaded_package::DownloadedPackage;
 
 pub struct Package {}
 
+const QUALIFIER: &str = "dev";
+const ORGANIZATION: &str = "hermione";
+const APPLICATION: &str = "herm";
+
 impl Package {
+    pub fn download_dir() -> Result<PathBuf> {
+        match ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION) {
+            Some(pd) => Ok(pd.cache_dir().to_path_buf()),
+            None => Err(anyhow!("Unable to determine directory structure.")),
+        }
+    }
+
     pub fn download(src: String, config: &Config) -> Result<DownloadedPackage> {
         let path = Path::new(&src).canonicalize()?;
         let package_name = Self::source_to_package_name(&src);
-        let checkout_path = Self::install_path(&config.hermione_home, &package_name);
-        let dest_path = Path::new(&checkout_path);
+        let checkout_path = Self::download_dir()?.join(&package_name);
 
-        let local_path = if path.is_dir() {
+        if path.is_dir() {
+            println!(
+                "Copying Package {} to {}",
+                path.display(),
+                checkout_path.display()
+            );
             let options = dir::CopyOptions::new();
             dir::copy(&path, &config.hermione_home, &options)?;
-            checkout_path
+            let local_path = checkout_path;
+            Ok(DownloadedPackage {
+                local_path: Path::new(&local_path).to_path_buf(),
+                package_name,
+            })
         } else {
-            let repo = Repository::clone(&src, dest_path)?;
-            repo.path().to_path_buf()
-        };
-
-        Ok(DownloadedPackage {
-            local_path: Path::new(&local_path).to_path_buf(),
-        })
+            // let repo = Repository::clone(&src, dest_path)?;
+            // repo.path().to_path_buf()
+            Err(anyhow!(
+                "Path to package does not exist: {}",
+                path.display()
+            ))
+        }
     }
 
     fn source_to_package_name(src: &str) -> String {

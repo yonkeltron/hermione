@@ -7,6 +7,7 @@ use crate::manifest::Manifest;
 
 pub struct DownloadedPackage {
     pub local_path: PathBuf,
+    pub package_name: String,
 }
 
 impl DownloadedPackage {
