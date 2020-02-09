@@ -10,13 +10,13 @@ const QUALIFIER: &str = "dev";
 const ORGANIZATION: &str = "hermione";
 const APPLICATION: &str = "herm";
 
-pub struct Package {
+pub struct PackageService {
     pub project_dirs: ProjectDirs,
 }
 
-impl Package {
+impl PackageService {
     pub fn new() -> Result<Self> {
-        Ok(Self {
+        Ok(PackageService {
             project_dirs: Self::project_dirs()?,
         })
     }
@@ -46,7 +46,7 @@ impl Package {
     }
 
     pub fn download(src: String) -> Result<DownloadedPackage> {
-        let package = Self {
+        let package = PackageService {
             project_dirs: Self::project_dirs()?,
         };
         let path = Path::new(&src).canonicalize()?;
@@ -98,7 +98,7 @@ mod tests {
         let input = "http://github.com/panda/bamboo.git";
         let expected = String::from("bamboo");
 
-        assert_eq!(Package::source_to_package_name(input), expected);
+        assert_eq!(PackageService::source_to_package_name(input), expected);
     }
 
     #[test]
@@ -106,14 +106,14 @@ mod tests {
         let input = "./panda";
         let expected = String::from("panda");
 
-        assert_eq!(Package::source_to_package_name(input), expected);
+        assert_eq!(PackageService::source_to_package_name(input), expected);
     }
 
     #[test]
     fn test_download() {
         let src = String::from("./example-package");
 
-        let package = Package::download(src).expect("Unable to instantiate package");
+        let package = PackageService::download(src).expect("Unable to instantiate package");
         assert!(package.local_path.is_dir());
         fs::remove_dir_all(package.local_path).expect("Unable to remove package in test");
     }
@@ -122,7 +122,7 @@ mod tests {
     fn test_install_path() {
         let package_name = "panda";
 
-        let package = Package::new().expect("Could not create package service");
+        let package = PackageService::new().expect("Could not create package service");
         let actual = package
             .installed_package_path(package_name)
             .expect("Package is not installed");

@@ -5,12 +5,12 @@ use std::path::PathBuf;
 
 use crate::installed_package::InstalledPackage;
 use crate::manifest::Manifest;
-use crate::package::Package;
+use crate::package_service::PackageService;
 
 pub struct DownloadedPackage {
     pub local_path: PathBuf,
     pub package_name: String,
-    pub package_service: Package,
+    pub package_service: PackageService,
 }
 
 impl DownloadedPackage {

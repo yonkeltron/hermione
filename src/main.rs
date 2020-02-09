@@ -7,11 +7,11 @@ mod file_mapping;
 mod file_mapping_definition;
 mod installed_package;
 mod manifest;
-mod package;
+mod package_service;
 
 use crate::config::Config;
 use crate::installed_package::InstalledPackage;
-use crate::package::Package;
+use crate::package_service::PackageService;
 
 fn main() -> Result<()> {
     let matches = App::new("herm")
@@ -62,11 +62,10 @@ fn main() -> Result<()> {
                 .expect("unable to read package name");
 
             let name = String::from(package_name);
-            let remove_result =
-                match InstalledPackage::from_package_name(name.clone()) {
-                    Ok(package) => package.remove(),
-                    Err(e) => Err(e),
-                };
+            let remove_result = match InstalledPackage::from_package_name(name.clone()) {
+                Ok(package) => package.remove(),
+                Err(e) => Err(e),
+            };
 
             match remove_result {
                 Ok(_success) => println!("Removed package {}", name),
@@ -77,7 +76,7 @@ fn main() -> Result<()> {
             let package_source = install_matches
                 .value_of("SOURCE")
                 .expect("Unable to read source");
-            let package = Package::download(String::from(package_source))?;
+            let package = PackageService::download(String::from(package_source))?;
             package.install()?;
         }
         (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),
