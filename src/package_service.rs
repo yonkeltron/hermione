@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use directories::ProjectDirs;
+use directories::{BaseDirs, ProjectDirs};
 use fs_extra::dir;
 
 use std::fs;
@@ -43,6 +43,13 @@ impl PackageService {
 
     pub fn install_dir(&self) -> PathBuf {
         self.project_dirs.data_dir().to_path_buf()
+    }
+
+    pub fn home_dir(&self) -> Result<PathBuf> {
+        match BaseDirs::new() {
+            Some(base_dirs) => Ok(base_dirs.home_dir().to_path_buf()),
+            None => Err(anyhow!("Unable to find HOME directory"))
+        }
     }
 
     pub fn installed_package_path(&self, package_name: &str) -> Result<PathBuf> {
