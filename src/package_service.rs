@@ -100,8 +100,10 @@ impl PackageService {
                 path.display(),
                 checkout_path.display()
             );
-            let options = dir::CopyOptions::new();
-            dir::copy(&path, &checkout_path, &options)?;
+            let mut options = dir::CopyOptions::new();
+            options.copy_inside = true;
+            dir::copy(&path, &checkout_path, &options)
+                .with_context(|| format!("Error copying package to {}", checkout_path.display()))?;
             let local_path = checkout_path;
             Ok(DownloadedPackage {
                 local_path: Path::new(&local_path).to_path_buf(),
