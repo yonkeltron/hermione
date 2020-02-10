@@ -35,6 +35,13 @@ fn main() -> Result<()> {
                 ),
         )
         .subcommand(
+            SubCommand::with_name("list")
+                .about("lists installed Hermione packages")
+                .alias("ls")
+                .version(env!("CARGO_PKG_VERSION"))
+                .author(env!("CARGO_PKG_AUTHORS")),
+        )
+        .subcommand(
             SubCommand::with_name("remove")
                 .about("removes Hermione entirely")
                 .version(env!("CARGO_PKG_VERSION"))
@@ -48,10 +55,23 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-
     match matches.subcommand() {
         ("init", _init_matches) => {
             PackageService::new()?.init()?;
+        }
+        ("install", Some(install_matches)) => {
+            let package_source = install_matches
+                .value_of("SOURCE")
+                .expect("Unable to read source");
+            PackageService::download_and_install(String::from(package_source))?;
+        }
+        ("list", _list_matches) => {
+            let installed_packages = PackageService::new()?.list_installed_packages()?;
+
+            println!("Displaying: {} Packages", installed_packages.len());
+            installed_packages
+                .iter()
+                .for_each(|installed_package| println!("{}", installed_package.package_name));
         }
         ("remove", Some(remove_matches)) => {
             let package_name = remove_matches
@@ -68,12 +88,6 @@ fn main() -> Result<()> {
                 Ok(_success) => println!("Removed package {}", name),
                 Err(e) => eprintln!("Unable to remove {} because {}", name, e.to_string()),
             }
-        }
-        ("install", Some(install_matches)) => {
-            let package_source = install_matches
-                .value_of("SOURCE")
-                .expect("Unable to read source");
-            PackageService::download_and_install(String::from(package_source))?;
         }
         (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),
     };
