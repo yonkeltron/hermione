@@ -1,7 +1,6 @@
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 
-mod config;
 mod downloaded_package;
 mod file_mapping;
 mod file_mapping_definition;
@@ -9,7 +8,6 @@ mod installed_package;
 mod manifest;
 mod package_service;
 
-use crate::config::Config;
 use crate::installed_package::InstalledPackage;
 use crate::package_service::PackageService;
 
@@ -50,7 +48,6 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    let config = Config::load()?;
 
     match matches.subcommand() {
         ("init", _init_matches) => {
