@@ -54,7 +54,7 @@ fn main() -> Result<()> {
 
     match matches.subcommand() {
         ("init", _init_matches) => {
-            config.init_hermione_home()?;
+            PackageService::new()?.init()?;
         }
         ("remove", Some(remove_matches)) => {
             let package_name = remove_matches
@@ -76,8 +76,7 @@ fn main() -> Result<()> {
             let package_source = install_matches
                 .value_of("SOURCE")
                 .expect("Unable to read source");
-            let package = PackageService::download(String::from(package_source))?;
-            package.install()?;
+            PackageService::download_and_install(String::from(package_source))?;
         }
         (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),
     };
