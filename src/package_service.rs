@@ -54,8 +54,10 @@ impl PackageService {
 
     pub fn installed_package_path(&self, package_name: &str) -> Result<PathBuf> {
         let path = self.install_dir().join(package_name);
-        if path.is_dir() {
+        if path.is_dir() && !package_name.trim().is_empty() {
             Ok(path)
+        } else if package_name.trim().is_empty() {
+            Err(anyhow!("Package name can not be empty."))
         } else {
             Err(anyhow!("It appears that {} isn't installed.", package_name))
         }
@@ -184,15 +186,20 @@ mod tests {
 
     #[test]
     fn test_install_path() {
-        let package_name = "panda";
+        let package_name = "example-package";
 
-        let package = PackageService::new().expect("Could not create package service");
-        let actual = package
+        let package_service: PackageService =
+            PackageService::new().expect("Could not create package service");
+        let installed_package =
+            PackageService::download_and_install("./example-package".to_string())
+                .expect("Failed to install package");
+
+        let actual = package_service
             .installed_package_path(package_name)
             .expect("Package is not installed");
+        installed_package.remove().expect("Failed to clean up dir");
 
-        let expected = Path::new("panda").to_path_buf();
-
+        let expected = package_service.install_dir().join(&package_name);
         assert_eq!(expected, actual);
     }
 }

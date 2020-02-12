@@ -60,11 +60,11 @@ mod tests {
     #[test]
     fn test_from_package_name_with_real_name() {
         let name = String::from("example-package");
-        let package =
-            PackageService::download(name.clone()).expect("Unable to install package in test");
+        let installed_package =
+            PackageService::download_and_install("./example-package".to_string())
+                .expect("Failed to install package");
 
         assert!(InstalledPackage::from_package_name(name).is_ok());
-
-        fs::remove_dir_all(package.local_path).expect("Unable to remove package in test");
+        installed_package.remove().expect("Failed to clean up dir");
     }
 }
