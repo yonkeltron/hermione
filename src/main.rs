@@ -46,6 +46,7 @@ fn main() -> Result<()> {
                 .about("removes Hermione entirely")
                 .version(env!("CARGO_PKG_VERSION"))
                 .author(env!("CARGO_PKG_AUTHORS"))
+                .alias("uninstall")
                 .arg(
                     Arg::with_name("PACKAGE")
                         .help("name of installed package")
