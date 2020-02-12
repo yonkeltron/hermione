@@ -27,7 +27,7 @@ impl DownloadedPackage {
             .iter()
             .filter(|result| result.is_err())
             .collect::<Vec<_>>();
-        if mapping_render_errors.len() > 0 {
+        if !mapping_render_errors.is_empty() {
             mapping_render_errors
                 .iter()
                 .for_each(|error| eprintln!("{:?}", error));
