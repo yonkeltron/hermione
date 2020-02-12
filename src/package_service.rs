@@ -48,7 +48,7 @@ impl PackageService {
     pub fn home_dir(&self) -> Result<PathBuf> {
         match BaseDirs::new() {
             Some(base_dirs) => Ok(base_dirs.home_dir().to_path_buf()),
-            None => Err(anyhow!("Unable to find HOME directory"))
+            None => Err(anyhow!("Unable to find HOME directory")),
         }
     }
 
@@ -99,7 +99,7 @@ impl PackageService {
         };
         let path = Path::new(&src).canonicalize()?;
         let package_name = Self::source_to_package_name(&src);
-        let checkout_path = package.download_dir().join(&package_name);
+        let checkout_path = package.download_dir();
 
         if path.is_dir() {
             println!(
@@ -109,11 +109,12 @@ impl PackageService {
             );
             let mut options = dir::CopyOptions::new();
             options.copy_inside = true;
+            options.overwrite = true;
             dir::copy(&path, &checkout_path, &options)
                 .with_context(|| format!("Error copying package to {}", checkout_path.display()))?;
-            let local_path = checkout_path;
+
             Ok(DownloadedPackage {
-                local_path: Path::new(&local_path).to_path_buf(),
+                local_path: checkout_path.join(&package_name),
                 package_name,
                 package_service: package,
             })

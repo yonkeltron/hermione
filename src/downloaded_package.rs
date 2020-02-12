@@ -20,7 +20,10 @@ impl DownloadedPackage {
         let mapping_render_results = manifest
             .mappings
             .into_iter()
-            .map(|mapping_definition| mapping_definition.render_file_mapping(&self.package_service))
+            .map(|mapping_definition| {
+                mapping_definition
+                    .render_file_mapping(&self.package_service, self.local_path.clone())
+            })
             .collect::<Vec<_>>();
 
         let mapping_render_errors = mapping_render_results
@@ -45,9 +48,9 @@ impl DownloadedPackage {
             let mut copy_options = dir::CopyOptions::new();
             copy_options.copy_inside = true;
             let dest_path = self.package_service.install_dir().join(&self.package_name);
-            dir::copy(&self.local_path, dest_path, &copy_options)?;
+            dir::copy(&self.local_path, &dest_path, &copy_options)?;
             Ok(InstalledPackage {
-                local_path: self.local_path,
+                local_path: dest_path,
                 package_name: self.package_name,
                 package_service: self.package_service,
             })

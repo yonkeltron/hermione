@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use tera::{Context, Tera};
 
-use std::path::Path;
+use std::path::{Path,PathBuf};
 
 use crate::file_mapping::FileMapping;
 use crate::package_service::PackageService;
@@ -14,14 +14,18 @@ pub struct FileMappingDefinition {
 }
 
 impl FileMappingDefinition {
-    pub fn render_file_mapping(self, package_service: &PackageService) -> Result<FileMapping> {
+    pub fn render_file_mapping(
+        self,
+        package_service: &PackageService,
+        package_path_buf: PathBuf,
+    ) -> Result<FileMapping> {
         let mut context = Context::new();
         let home_dir_path_buf = package_service.home_dir()?;
         let home_dir = home_dir_path_buf.to_string_lossy();
         context.insert("HOME", &home_dir);
         match Tera::one_off(&self.o, &context, false) {
             Ok(o) => {
-                let i_path = Path::new(&self.i).to_path_buf();
+                let i_path = package_path_buf.join(&self.i);
                 let o_path = Path::new(&o).to_path_buf();
                 Ok(FileMapping::new(i_path, o_path))
             }
