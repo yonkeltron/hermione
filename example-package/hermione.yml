@@ -3,6 +3,6 @@ name: "Example Package"
 author: "J. Random Hacker"
 mappings:
   - i: a.txt
-    o: panda.txt
+    o: "{{HOME}}/panda.txt"
   - i: b.txt
-    o: bamboo.txt
+    o: "{{HOME}}/bamboo.txt"

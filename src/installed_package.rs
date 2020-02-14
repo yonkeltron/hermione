@@ -4,17 +4,17 @@ use std::fs;
 use std::path::PathBuf;
 
 use crate::manifest::Manifest;
-use crate::package::Package;
+use crate::package_service::PackageService;
 
 pub struct InstalledPackage {
     pub local_path: PathBuf,
     pub package_name: String,
-    pub package_service: Package,
+    pub package_service: PackageService,
 }
 
 impl InstalledPackage {
     pub fn from_package_name(name: String) -> Result<Self> {
-        let package_service = Package::new()?;
+        let package_service = PackageService::new()?;
         let package_path = package_service.installed_package_path(&name)?;
 
         Ok(InstalledPackage {
@@ -29,8 +29,9 @@ impl InstalledPackage {
         let manifest = Manifest::new_from_path(manifest_path)?;
 
         for mapping_definition in manifest.mappings {
-            let mapping = mapping_definition.render_file_mapping()?;
-            mapping.uninstall()?;
+            let mapping = mapping_definition
+                .render_file_mapping(&self.package_service, self.local_path.clone())?;
+            println!("Successfully => {}", mapping.uninstall()?);
         }
 
         Ok(true)
@@ -59,10 +60,11 @@ mod tests {
     #[test]
     fn test_from_package_name_with_real_name() {
         let name = String::from("example-package");
-        let package = Package::download(name.clone()).expect("Unable to install package in test");
+        let installed_package =
+            PackageService::download_and_install("./example-package".to_string())
+                .expect("Failed to install package");
 
         assert!(InstalledPackage::from_package_name(name).is_ok());
-
-        fs::remove_dir_all(package.local_path).expect("Unable to remove package in test");
+        installed_package.remove().expect("Failed to clean up dir");
     }
 }
