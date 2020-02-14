@@ -103,6 +103,10 @@ impl PackageService {
         let package_name = Self::source_to_package_name(&src);
         let checkout_path = package.download_dir();
 
+        if !checkout_path.exists() {
+            println!("Creating download directory {}", &checkout_path.display());
+            dir::create_all(&checkout_path, false)?;
+        }
         if path.is_dir() {
             println!(
                 "Copying Package {} to {}",

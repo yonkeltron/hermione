@@ -47,10 +47,14 @@ impl DownloadedPackage {
 
             let mut copy_options = dir::CopyOptions::new();
             copy_options.copy_inside = true;
-            let dest_path = self.package_service.install_dir().join(&self.package_name);
+            let dest_path = self.package_service.install_dir();
+            if !dest_path.exists() {
+                println!("Creating install directory {}", &dest_path.display());
+                dir::create_all(&dest_path, false)?;
+            }
             dir::copy(&self.local_path, &dest_path, &copy_options)?;
             Ok(InstalledPackage {
-                local_path: dest_path,
+                local_path: dest_path.join(&self.package_name),
                 package_name: self.package_name,
                 package_service: self.package_service,
             })
