@@ -35,6 +35,18 @@ fn main() -> Result<()> {
                 ),
         )
         .subcommand(
+            SubCommand::with_name("implode")
+                .about("completely remove Hermione from the system")
+                .version(env!("CARGO_PKG_VERSION"))
+                .author(env!("CARGO_PKG_AUTHORS"))
+                .arg(
+                    Arg::with_name("confirm")
+                        .help("pointer to package (git URL or local file path)")
+                        .long("yes-i-am-sure")
+                        .required(true),
+                ),
+        )
+        .subcommand(
             SubCommand::with_name("list")
                 .about("lists installed Hermione packages")
                 .alias("ls")
@@ -65,6 +77,16 @@ fn main() -> Result<()> {
                 .value_of("SOURCE")
                 .expect("Unable to read source");
             PackageService::download_and_install(String::from(package_source))?;
+        }
+        ("implode", Some(implode_matches)) => {
+            let confirmed = implode_matches.is_present("confirm");
+            if confirmed {
+                let ps = PackageService::new()?;
+                ps.implode()?;
+            } else {
+                println!("I am not sure you want me to do this.");
+                println!("Please pass confirm flag if you are sure");
+            }
         }
         ("list", _list_matches) => {
             let installed_packages = PackageService::new()?.list_installed_packages()?;

@@ -151,8 +151,7 @@ impl PackageService {
         }
     }
 
-    #[cfg(test)]
-    fn purge_installed_packages(&self) -> Result<()> {
+    pub fn purge_installed_packages(&self) -> Result<()> {
         let errored_uninstalled = self
             .list_installed_packages()?
             .into_iter()
@@ -167,8 +166,7 @@ impl PackageService {
         }
     }
 
-    #[cfg(test)]
-    fn purge_everything(&self) -> Result<()> {
+    pub fn implode(&self) -> Result<()> {
         match self.purge_installed_packages() {
             Ok(_) => {
                 println!("All packages have been uninstalled.");
@@ -200,25 +198,43 @@ impl PackageService {
 mod tests {
     use super::*;
 
+    use scopeguard::defer;
+
     use std::fs;
 
     fn purge() {
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
         package_service
-            .purge_everything()
+            .implode()
             .expect("Failed to clean up in test");
     }
 
     #[test]
-    fn test_list_installed_packages() {
+    fn test_list_installed_packages_with_nothing() {
+        defer!(purge());
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
         let installed_package_list = package_service
             .list_installed_packages()
             .expect("Can not get list of installed packages in test");
         assert_eq!(0, installed_package_list.len());
-        purge();
+    }
+
+    #[test]
+    fn test_list_installed_packages_with_package() {
+        defer!(purge());
+
+        let src = String::from("./example-package");
+
+        PackageService::download_and_install(src).expect("Unable to instantiate package in test");
+
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
+        let installed_package_list = package_service
+            .list_installed_packages()
+            .expect("Can not get list of installed packages in test");
+        assert_eq!(1, installed_package_list.len());
     }
 
     #[test]
@@ -239,16 +255,19 @@ mod tests {
 
     #[test]
     fn test_download() {
+        defer!(purge());
+
         let src = String::from("./example-package");
 
         let package = PackageService::download(src).expect("Unable to instantiate package in test");
         assert!(package.local_path.is_dir());
         fs::remove_dir_all(package.local_path).expect("Unable to remove package in test");
-        purge();
     }
 
     #[test]
-    fn test_download_install() {
+    fn test_download_and_install() {
+        defer!(purge());
+
         let src = String::from("./example-package");
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
@@ -257,12 +276,13 @@ mod tests {
         let installed_path = package_service
             .installed_package_path("example-package")
             .expect("Unable to remove example-packahe in test");
-        assert!(installed_path.exists());
-        purge();
+        assert!(installed_path.is_dir());
     }
 
     #[test]
-    fn test_install_path() {
+    fn test_install_package_path() {
+        defer!(purge());
+
         let package_name = "example-package";
 
         let package_service: PackageService =
@@ -277,6 +297,5 @@ mod tests {
 
         let expected = package_service.install_dir().join(&package_name);
         assert_eq!(expected, actual);
-        purge();
     }
 }
