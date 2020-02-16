@@ -10,6 +10,11 @@ use crate::installed_package::InstalledPackage;
 
 const QUALIFIER: &str = "dev";
 const ORGANIZATION: &str = "hermione";
+
+#[cfg(test)]
+const APPLICATION: &str = "herm_test";
+
+#[cfg(not(test))]
 const APPLICATION: &str = "herm";
 
 #[derive(Clone, Debug)]
@@ -64,23 +69,28 @@ impl PackageService {
     }
 
     pub fn list_installed_packages(&self) -> Result<Vec<InstalledPackage>> {
-        let mut entries = fs::read_dir(self.install_dir())?
-            .map(|entry_result| entry_result.map(|entry| entry.path()))
-            .collect::<Result<Vec<_>, std::io::Error>>()?;
-        entries.sort();
-        let dirs = entries.iter().filter(|entry_path| entry_path.is_dir());
-        Ok(dirs
-            .map(|entry| {
-                let package_name = String::from(entry.to_string_lossy());
-                let package_service = self.clone();
-                let local_path = entry.clone();
-                InstalledPackage {
-                    local_path,
-                    package_name: PackageService::source_to_package_name(&package_name),
-                    package_service,
-                }
-            })
-            .collect())
+        if !self.install_dir().exists() {
+            let r: Vec<InstalledPackage> = Vec::new();
+            Ok(r)
+        } else {
+            let mut entries = fs::read_dir(self.install_dir())?
+                .map(|entry_result| entry_result.map(|entry| entry.path()))
+                .collect::<Result<Vec<_>, std::io::Error>>()?;
+            entries.sort();
+            let dirs = entries.iter().filter(|entry_path| entry_path.is_dir());
+            Ok(dirs
+                .map(|entry| {
+                    let package_name = String::from(entry.to_string_lossy());
+                    let package_service = self.clone();
+                    let local_path = entry.clone();
+                    InstalledPackage {
+                        local_path,
+                        package_name: PackageService::source_to_package_name(&package_name),
+                        package_service,
+                    }
+                })
+                .collect())
+        }
     }
 
     pub fn project_dirs() -> Result<ProjectDirs> {
@@ -96,9 +106,7 @@ impl PackageService {
     }
 
     pub fn download(src: String) -> Result<DownloadedPackage> {
-        let package = PackageService {
-            project_dirs: Self::project_dirs()?,
-        };
+        let package = PackageService::new()?;
         let path = Path::new(&src).canonicalize()?;
         let package_name = Self::source_to_package_name(&src);
         let checkout_path = package.download_dir();
@@ -142,6 +150,50 @@ impl PackageService {
             None => String::from("UNKNOWN_PACKAGE"),
         }
     }
+
+    #[cfg(test)]
+    fn purge_installed_packages(&self) -> Result<()> {
+        let errored_uninstalled = self
+            .list_installed_packages()?
+            .into_iter()
+            .map(|installed_package| installed_package.uninstall().unwrap_or(false))
+            .filter(|was_removed| !was_removed)
+            .collect::<Vec<bool>>();
+
+        if errored_uninstalled.is_empty() {
+            Ok(())
+        } else {
+            Err(anyhow!("Failed to uninstall all packges."))
+        }
+    }
+
+    #[cfg(test)]
+    fn purge_everything(&self) -> Result<()> {
+        match self.purge_installed_packages() {
+            Ok(_) => {
+                println!("All packages have been uninstalled.");
+                println!(
+                    "Removing install directory => ({})",
+                    self.install_dir().display()
+                );
+                if self.install_dir().exists() {
+                    fs::remove_dir_all(self.install_dir())?
+                }
+            }
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                eprintln!("WARNING: Install dir has not been removed")
+            }
+        }
+        println!(
+            "Removing download dir => ({})",
+            self.download_dir().display()
+        );
+        if self.download_dir().exists() {
+            fs::remove_dir_all(self.download_dir())?;
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -149,6 +201,14 @@ mod tests {
     use super::*;
 
     use std::fs;
+
+    fn purge() {
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
+        package_service
+            .purge_everything()
+            .expect("Failed to clean up after tests");
+    }
 
     #[test]
     fn test_download_and_install() {
