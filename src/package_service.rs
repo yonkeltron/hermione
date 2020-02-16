@@ -207,20 +207,18 @@ mod tests {
             PackageService::new().expect("Unable to instantiate PackageService in test");
         package_service
             .purge_everything()
-            .expect("Failed to clean up after tests");
+            .expect("Failed to clean up in test");
     }
 
     #[test]
-    fn test_download_and_install() {
+    fn test_list_installed_packages() {
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
-        package_service
-            .init()
-            .expect("Unable to initialize directories in test");
         let installed_package_list = package_service
             .list_installed_packages()
             .expect("Can not get list of installed packages in test");
         assert_eq!(0, installed_package_list.len());
+        purge();
     }
 
     #[test]
@@ -243,9 +241,24 @@ mod tests {
     fn test_download() {
         let src = String::from("./example-package");
 
-        let package = PackageService::download(src).expect("Unable to instantiate package");
+        let package = PackageService::download(src).expect("Unable to instantiate package in test");
         assert!(package.local_path.is_dir());
         fs::remove_dir_all(package.local_path).expect("Unable to remove package in test");
+        purge();
+    }
+
+    #[test]
+    fn test_download_install() {
+        let src = String::from("./example-package");
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
+
+        PackageService::download_and_install(src).expect("Unable to instantiate package in test");
+        let installed_path = package_service
+            .installed_package_path("example-package")
+            .expect("Unable to remove example-packahe in test");
+        assert!(installed_path.exists());
+        purge();
     }
 
     #[test]
@@ -253,17 +266,17 @@ mod tests {
         let package_name = "example-package";
 
         let package_service: PackageService =
-            PackageService::new().expect("Could not create package service");
-        let installed_package =
-            PackageService::download_and_install("./example-package".to_string())
-                .expect("Failed to install package");
+            PackageService::new().expect("Could not create package service in test");
+
+        PackageService::download_and_install("./example-package".to_string())
+            .expect("Failed to install package in test");
 
         let actual = package_service
             .installed_package_path(package_name)
-            .expect("Package is not installed");
-        installed_package.remove().expect("Failed to clean up dir");
+            .expect("Package is not installed in test");
 
         let expected = package_service.install_dir().join(&package_name);
         assert_eq!(expected, actual);
+        purge();
     }
 }
