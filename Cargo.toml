@@ -28,3 +28,4 @@ directories = "2.0.2"
 [dev-dependencies]
 quickcheck = "0.9"
 quickcheck_macros = "0.9"
+scopeguard = "1.0.0"

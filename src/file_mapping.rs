@@ -52,11 +52,14 @@ impl FileMapping {
     }
 
     pub fn uninstall(self) -> Result<String> {
-        if self.o.exists() && self.o.is_file() {
+        if self.o.is_file() {
             fs::remove_file(&self.o)?;
             Ok(format!("Removed {}", self.o.display()))
         } else {
-            Ok(format!("Unable to remove {}", self.o.display()))
+            Ok(format!(
+                "Not removing {} because it is not a file",
+                self.o.display()
+            ))
         }
     }
 }

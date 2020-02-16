@@ -52,6 +52,16 @@ mod tests {
 
     use quickcheck_macros::quickcheck;
 
+    use scopeguard::defer;
+
+    fn purge() {
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
+        package_service
+            .implode()
+            .expect("Failed to clean up in test");
+    }
+
     #[quickcheck]
     fn from_package_name_with_bogus_package_always_fails(name: String) -> bool {
         InstalledPackage::from_package_name(name).is_err()
@@ -59,6 +69,7 @@ mod tests {
 
     #[test]
     fn test_from_package_name_with_real_name() {
+        defer!(purge());
         let name = String::from("example-package");
         let installed_package =
             PackageService::download_and_install("./example-package".to_string())
