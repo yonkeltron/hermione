@@ -1,6 +1,8 @@
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 
+mod action;
+mod actions;
 mod downloaded_package;
 mod file_mapping;
 mod file_mapping_definition;
@@ -8,7 +10,7 @@ mod installed_package;
 mod manifest;
 mod package_service;
 
-use crate::installed_package::InstalledPackage;
+use crate::action::Action;
 use crate::package_service::PackageService;
 
 fn main() -> Result<()> {
@@ -16,12 +18,6 @@ fn main() -> Result<()> {
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
-        .subcommand(
-            SubCommand::with_name("init")
-                .about("initializes Hermione")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS")),
-        )
         .subcommand(
             SubCommand::with_name("install")
                 .about("install a Hermione package")
@@ -68,33 +64,29 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
+    let package_service = PackageService::new()?;
+    package_service.init()?;
+
     match matches.subcommand() {
-        ("init", _init_matches) => {
-            PackageService::new()?.init()?;
-        }
         ("install", Some(install_matches)) => {
             let package_source = install_matches
                 .value_of("SOURCE")
                 .expect("Unable to read source");
-            PackageService::download_and_install(String::from(package_source))?;
+
+            actions::install_action::InstallAction {
+                package_source: String::from(package_source),
+            }
+            .execute(package_service)?;
         }
         ("implode", Some(implode_matches)) => {
             let confirmed = implode_matches.is_present("confirm");
-            if confirmed {
-                let ps = PackageService::new()?;
-                ps.implode()?;
-            } else {
-                println!("I am not sure you want me to do this.");
-                println!("Please pass confirm flag if you are sure");
+            actions::implode_action::ImplodeAction {
+                yes_i_am_sure: confirmed,
             }
+            .execute(package_service)?;
         }
         ("list", _list_matches) => {
-            let installed_packages = PackageService::new()?.list_installed_packages()?;
-
-            println!("Displaying: {} Packages", installed_packages.len());
-            installed_packages
-                .iter()
-                .for_each(|installed_package| println!("{}", installed_package.package_name));
+            actions::list_action::ListAction {}.execute(package_service)?;
         }
         ("remove", Some(remove_matches)) => {
             let package_name = remove_matches
@@ -102,15 +94,7 @@ fn main() -> Result<()> {
                 .expect("unable to read package name");
 
             let name = String::from(package_name);
-            let remove_result = match InstalledPackage::from_package_name(name.clone()) {
-                Ok(package) => package.remove(),
-                Err(e) => Err(e),
-            };
-
-            match remove_result {
-                Ok(_success) => println!("Removed package {}", name),
-                Err(e) => eprintln!("Unable to remove {} because {}", name, e.to_string()),
-            }
+            actions::remove_action::RemoveAction { package_name: name }.execute(package_service)?;
         }
         (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),
     };
