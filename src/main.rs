@@ -20,12 +20,6 @@ fn main() -> Result<()> {
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
         .subcommand(
-            SubCommand::with_name("init")
-                .about("initializes Hermione")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS")),
-        )
-        .subcommand(
             SubCommand::with_name("install")
                 .about("install a Hermione package")
                 .version(env!("CARGO_PKG_VERSION"))
@@ -72,10 +66,9 @@ fn main() -> Result<()> {
         .get_matches();
 
     let package_service = PackageService::new()?;
+    package_service.init()?;
+
     match matches.subcommand() {
-        ("init", _init_matches) => {
-            PackageService::new()?.init()?;
-        }
         ("install", Some(install_matches)) => {
             let package_source = install_matches
                 .value_of("SOURCE")
