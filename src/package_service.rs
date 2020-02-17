@@ -31,9 +31,7 @@ impl PackageService {
 
     pub fn init(&self) -> Result<bool> {
         let d_dir = self.download_dir();
-        if d_dir.is_dir() {
-            println!("Download directory already exists: {}", &d_dir.display());
-        } else {
+        if !d_dir.is_dir() {
             println!("Creating download directory {}", &d_dir.display());
             fs::create_dir_all(&d_dir).with_context(|| {
                 format!("Unable to create download directory {}", d_dir.display())
@@ -41,9 +39,7 @@ impl PackageService {
         }
 
         let i_dir = self.install_dir();
-        if i_dir.is_dir() {
-            println!("Install directory already exists: {}", &i_dir.display());
-        } else {
+        if !i_dir.is_dir() {
             println!("Creating install directory {}", &i_dir.display());
             fs::create_dir_all(&i_dir).with_context(|| {
                 format!("Unable to create install directory {}", i_dir.display())
