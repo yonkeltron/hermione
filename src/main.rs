@@ -71,6 +71,7 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
+    let package_service = PackageService::new()?;
     match matches.subcommand() {
         ("init", _init_matches) => {
             PackageService::new()?.init()?;
@@ -79,23 +80,21 @@ fn main() -> Result<()> {
             let package_source = install_matches
                 .value_of("SOURCE")
                 .expect("Unable to read source");
-            PackageService::download_and_install(String::from(package_source))?;
+
+            actions::install_action::InstallAction {
+                package_source: String::from(package_source),
+            }
+            .execute(package_service)?;
         }
         ("implode", Some(implode_matches)) => {
             let confirmed = implode_matches.is_present("confirm");
-            let package_service = PackageService::new()?;
             actions::implode_action::ImplodeAction {
                 yes_i_am_sure: confirmed,
             }
             .execute(package_service)?;
         }
         ("list", _list_matches) => {
-            let installed_packages = PackageService::new()?.list_installed_packages()?;
-
-            println!("Displaying: {} Packages", installed_packages.len());
-            installed_packages
-                .iter()
-                .for_each(|installed_package| println!("{}", installed_package.package_name));
+            actions::list_action::ListAction {}.execute(package_service)?;
         }
         ("remove", Some(remove_matches)) => {
             let package_name = remove_matches

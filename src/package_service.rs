@@ -100,16 +100,15 @@ impl PackageService {
         }
     }
 
-    pub fn download_and_install(src: String) -> Result<InstalledPackage> {
-        let downloaded_package = Self::download(src)?;
+    pub fn download_and_install(self, src: String) -> Result<InstalledPackage> {
+        let downloaded_package = self.download(src)?;
         Ok(downloaded_package.install()?)
     }
 
-    pub fn download(src: String) -> Result<DownloadedPackage> {
-        let package = PackageService::new()?;
+    pub fn download(self, src: String) -> Result<DownloadedPackage> {
         let path = Path::new(&src).canonicalize()?;
         let package_name = Self::source_to_package_name(&src);
-        let checkout_path = package.download_dir();
+        let checkout_path = self.download_dir();
 
         if !checkout_path.exists() {
             println!("Creating download directory {}", &checkout_path.display());
@@ -130,7 +129,7 @@ impl PackageService {
             Ok(DownloadedPackage {
                 local_path: checkout_path.join(&package_name),
                 package_name,
-                package_service: package,
+                package_service: self,
             })
         } else {
             // let repo = Repository::clone(&src, dest_path)?;
@@ -226,12 +225,15 @@ mod tests {
         defer!(purge());
 
         let src = String::from("./example-package");
-
-        PackageService::download_and_install(src).expect("Unable to instantiate package in test");
-
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
-        let installed_package_list = package_service
+        package_service
+            .download_and_install(src)
+            .expect("Unable to instantiate package in test");
+
+        let test_package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
+        let installed_package_list = test_package_service
             .list_installed_packages()
             .expect("Can not get list of installed packages in test");
         assert_eq!(1, installed_package_list.len());
@@ -258,8 +260,11 @@ mod tests {
         defer!(purge());
 
         let src = String::from("./example-package");
-
-        let package = PackageService::download(src).expect("Unable to instantiate package in test");
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
+        let package = package_service
+            .download(src)
+            .expect("Unable to instantiate package in test");
         assert!(package.local_path.is_dir());
         fs::remove_dir_all(package.local_path).expect("Unable to remove package in test");
     }
@@ -272,8 +277,14 @@ mod tests {
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
 
-        PackageService::download_and_install(src).expect("Unable to instantiate package in test");
-        let installed_path = package_service
+        package_service
+            .download_and_install(src)
+            .expect("Unable to instantiate package in test");
+
+        let test_package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
+
+        let installed_path = test_package_service
             .installed_package_path("example-package")
             .expect("Unable to remove example-packahe in test");
         assert!(installed_path.is_dir());
@@ -288,14 +299,18 @@ mod tests {
         let package_service: PackageService =
             PackageService::new().expect("Could not create package service in test");
 
-        PackageService::download_and_install("./example-package".to_string())
+        package_service
+            .download_and_install("./example-package".to_string())
             .expect("Failed to install package in test");
 
-        let actual = package_service
+        let test_package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
+
+        let actual = test_package_service
             .installed_package_path(package_name)
             .expect("Package is not installed in test");
 
-        let expected = package_service.install_dir().join(&package_name);
+        let expected = test_package_service.install_dir().join(&package_name);
         assert_eq!(expected, actual);
     }
 }

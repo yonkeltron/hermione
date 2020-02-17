@@ -71,9 +71,11 @@ mod tests {
     fn test_from_package_name_with_real_name() {
         defer!(purge());
         let name = String::from("example-package");
-        let installed_package =
-            PackageService::download_and_install("./example-package".to_string())
-                .expect("Failed to install package");
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
+        let installed_package = package_service
+            .download_and_install("./example-package".to_string())
+            .expect("Failed to install package");
 
         assert!(InstalledPackage::from_package_name(name).is_ok());
         installed_package.remove().expect("Failed to clean up dir");
