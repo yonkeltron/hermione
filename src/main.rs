@@ -1,6 +1,8 @@
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
 
+mod action;
+mod actions;
 mod downloaded_package;
 mod file_mapping;
 mod file_mapping_definition;
@@ -8,6 +10,7 @@ mod installed_package;
 mod manifest;
 mod package_service;
 
+use crate::action::Action;
 use crate::installed_package::InstalledPackage;
 use crate::package_service::PackageService;
 
@@ -80,13 +83,11 @@ fn main() -> Result<()> {
         }
         ("implode", Some(implode_matches)) => {
             let confirmed = implode_matches.is_present("confirm");
-            if confirmed {
-                let ps = PackageService::new()?;
-                ps.implode()?;
-            } else {
-                println!("I am not sure you want me to do this.");
-                println!("Please pass confirm flag if you are sure");
+            let package_service = PackageService::new()?;
+            actions::implode_action::ImplodeAction {
+                yes_i_am_sure: confirmed,
             }
+            .execute(package_service)?;
         }
         ("list", _list_matches) => {
             let installed_packages = PackageService::new()?.list_installed_packages()?;
