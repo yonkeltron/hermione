@@ -11,7 +11,6 @@ mod manifest;
 mod package_service;
 
 use crate::action::Action;
-use crate::installed_package::InstalledPackage;
 use crate::package_service::PackageService;
 
 fn main() -> Result<()> {

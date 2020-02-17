@@ -68,7 +68,7 @@ impl PackageService {
         }
     }
 
-    pub fn from_package_name(self, name: String) -> Result<InstalledPackage> {
+    pub fn get_installed_package(self, name: String) -> Result<InstalledPackage> {
         let package_path = self.installed_package_path(&name)?;
 
         Ok(InstalledPackage {
@@ -153,8 +153,6 @@ impl PackageService {
                 package_service: self,
             })
         } else {
-            // let repo = Repository::clone(&src, dest_path)?;
-            // repo.path().to_path_buf()
             Err(anyhow!(
                 "Path to package does not exist: {}",
                 path.display()
@@ -340,6 +338,6 @@ mod tests {
     fn from_package_name_with_bogus_package_always_fails(name: String) -> bool {
         let package_service: PackageService =
             PackageService::new().expect("Could not create package service in test");
-        package_service.from_package_name(name).is_err()
+        package_service.get_installed_package(name).is_err()
     }
 }

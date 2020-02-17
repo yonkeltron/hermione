@@ -62,7 +62,7 @@ mod tests {
         let test_package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
 
-        assert!(test_package_service.from_package_name(name).is_ok());
+        assert!(test_package_service.get_installed_package(name).is_ok());
         installed_package.remove().expect("Failed to clean up dir");
     }
 }

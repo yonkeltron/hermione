@@ -9,7 +9,7 @@ pub struct RemoveAction {
 
 impl Action for RemoveAction {
     fn execute(self, package_service: PackageService) -> Result<()> {
-        let remove_result = match package_service.from_package_name(self.package_name.clone()) {
+        let remove_result = match package_service.get_installed_package(self.package_name.clone()) {
             Ok(package) => package.remove(),
             Err(e) => Err(e),
         };
