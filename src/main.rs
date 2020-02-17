@@ -95,15 +95,7 @@ fn main() -> Result<()> {
                 .expect("unable to read package name");
 
             let name = String::from(package_name);
-            let remove_result = match InstalledPackage::from_package_name(name.clone()) {
-                Ok(package) => package.remove(),
-                Err(e) => Err(e),
-            };
-
-            match remove_result {
-                Ok(_success) => println!("Removed package {}", name),
-                Err(e) => eprintln!("Unable to remove {} because {}", name, e.to_string()),
-            }
+            actions::remove_action::RemoveAction { package_name: name }.execute(package_service)?;
         }
         (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),
     };

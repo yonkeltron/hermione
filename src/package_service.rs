@@ -68,6 +68,16 @@ impl PackageService {
         }
     }
 
+    pub fn from_package_name(self, name: String) -> Result<InstalledPackage> {
+        let package_path = self.installed_package_path(&name)?;
+
+        Ok(InstalledPackage {
+            local_path: package_path,
+            package_name: name,
+            package_service: self,
+        })
+    }
+
     pub fn installed_package_path(&self, package_name: &str) -> Result<PathBuf> {
         let path = self.install_dir().join(package_name);
         if path.is_dir() && !package_name.trim().is_empty() {
@@ -208,6 +218,7 @@ impl PackageService {
 mod tests {
     use super::*;
 
+    use quickcheck_macros::quickcheck;
     use scopeguard::defer;
 
     use std::fs;
@@ -323,5 +334,12 @@ mod tests {
 
         let expected = test_package_service.install_dir().join(&package_name);
         assert_eq!(expected, actual);
+    }
+
+    #[quickcheck]
+    fn from_package_name_with_bogus_package_always_fails(name: String) -> bool {
+        let package_service: PackageService =
+            PackageService::new().expect("Could not create package service in test");
+        package_service.from_package_name(name).is_err()
     }
 }

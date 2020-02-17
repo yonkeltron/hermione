@@ -13,17 +13,6 @@ pub struct InstalledPackage {
 }
 
 impl InstalledPackage {
-    pub fn from_package_name(name: String) -> Result<Self> {
-        let package_service = PackageService::new()?;
-        let package_path = package_service.installed_package_path(&name)?;
-
-        Ok(InstalledPackage {
-            local_path: package_path,
-            package_name: name,
-            package_service,
-        })
-    }
-
     pub fn uninstall(&self) -> Result<bool> {
         let manifest_path = self.local_path.join("hermione.yml");
         let manifest = Manifest::new_from_path(manifest_path)?;
@@ -50,8 +39,6 @@ impl InstalledPackage {
 mod tests {
     use super::*;
 
-    use quickcheck_macros::quickcheck;
-
     use scopeguard::defer;
 
     fn purge() {
@@ -60,11 +47,6 @@ mod tests {
         package_service
             .implode()
             .expect("Failed to clean up in test");
-    }
-
-    #[quickcheck]
-    fn from_package_name_with_bogus_package_always_fails(name: String) -> bool {
-        InstalledPackage::from_package_name(name).is_err()
     }
 
     #[test]
@@ -77,7 +59,10 @@ mod tests {
             .download_and_install("./example-package".to_string())
             .expect("Failed to install package");
 
-        assert!(InstalledPackage::from_package_name(name).is_ok());
+        let test_package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
+
+        assert!(test_package_service.from_package_name(name).is_ok());
         installed_package.remove().expect("Failed to clean up dir");
     }
 }
