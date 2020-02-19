@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context, Result};
-use colored::*;
 
 #[cfg(test)]
 use quickcheck_macros::quickcheck;
@@ -20,9 +19,9 @@ impl FileMapping {
 
     pub fn display_line(&self) -> String {
         format!(
-            "{} -> {}",
-            self.i.to_string_lossy().green(),
-            self.o.to_string_lossy().green()
+            "Copying {} -> {}",
+            self.i.to_string_lossy(),
+            self.o.to_string_lossy(),
         )
     }
 
@@ -44,7 +43,7 @@ impl FileMapping {
             ))
         } else {
             Err(anyhow!(
-                "Unable to install from {} to {}",
+                "Unable to install from {} -> {}",
                 self.i.display(),
                 self.o.display()
             ))
