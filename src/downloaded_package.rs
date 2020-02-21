@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use fs_extra::dir;
+use slog::{error, info};
 
 use std::path::PathBuf;
 
@@ -39,9 +40,12 @@ impl DownloadedPackage {
             for mapping_result in mapping_render_results {
                 match mapping_result {
                     Ok(mapping) => {
-                        println!("{}", mapping.install()?);
+                        info!(self.package_service.logger, "{}", mapping.install()?);
                     }
-                    Err(e) => eprintln!("Failed to resolve files destination {}", e.to_string()),
+                    Err(e) => {
+                        error!(self.package_service.logger, "Failed to create");
+                        eprintln!("Failed to resolve files destination {}", e.to_string())
+                    }
                 }
             }
 
@@ -49,10 +53,23 @@ impl DownloadedPackage {
             copy_options.copy_inside = true;
             let dest_path = self.package_service.install_dir();
             if !dest_path.exists() {
-                println!("Creating install directory {}", &dest_path.display());
+                info!(
+                    self.package_service.logger,
+                    "Creating install directory";
+                    "path" => &dest_path.display()
+                );
                 dir::create_all(&dest_path, false)?;
+                info!(
+                    self.package_service.logger,
+                    "Successfully created install directory"
+                );
             }
+            info!(
+                self.package_service.logger,
+                "Installing"; "path" => &self.package_name,
+            );
             dir::copy(&self.local_path, &dest_path, &copy_options)?;
+            info!(self.package_service.logger, "Successfully installed"; "package" => self.package_name.clone());
             Ok(InstalledPackage {
                 local_path: dest_path.join(&self.package_name),
                 package_name: self.package_name,

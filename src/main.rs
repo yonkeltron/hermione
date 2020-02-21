@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::{App, Arg, SubCommand};
+use slog::{error, o, Level};
 
 mod action;
 mod actions;
@@ -7,10 +8,12 @@ mod downloaded_package;
 mod file_mapping;
 mod file_mapping_definition;
 mod installed_package;
+mod logger;
 mod manifest;
 mod package_service;
 
 use crate::action::Action;
+use crate::logger::create_logger;
 use crate::package_service::PackageService;
 
 fn main() -> Result<()> {
@@ -18,6 +21,14 @@ fn main() -> Result<()> {
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
+        .arg(
+            Arg::with_name("log_format")
+                .long("log-format")
+                .help("output log format")
+                .possible_values(&["human", "json", "prettyjson"])
+                .default_value("human")
+                .global(true),
+        )
         .subcommand(
             SubCommand::with_name("install")
                 .about("install a Hermione package")
@@ -64,8 +75,16 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    let package_service = PackageService::new()?;
-    package_service.init()?;
+    let format = matches
+        .value_of("log_format")
+        .expect("Unable to read log format");
+    let subcommand_name = String::from(matches.subcommand_name().unwrap_or("error"));
+    let log = create_logger(format, Level::Info).new(o!("action" => subcommand_name.clone()));
+    let package_service = PackageService::new(log)?;
+
+    if subcommand_name != "implode" {
+        package_service.init()?;
+    };
 
     match matches.subcommand() {
         ("install", Some(install_matches)) => {
@@ -96,7 +115,10 @@ fn main() -> Result<()> {
             let name = String::from(package_name);
             actions::remove_action::RemoveAction { package_name: name }.execute(package_service)?;
         }
-        (subcommand, _) => eprintln!("Unknown subcommand '{}'", subcommand),
+        (subcommand, _) => error!(
+            package_service.logger,
+            "Unknown subcommand '{}'", subcommand
+        ),
     };
 
     Ok(())

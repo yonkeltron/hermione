@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use slog::{error, info};
 
 use crate::action::Action;
 use crate::package_service::PackageService;
@@ -9,10 +10,19 @@ pub struct ImplodeAction {
 
 impl Action for ImplodeAction {
     fn execute(self, package_service: PackageService) -> Result<()> {
+        info!(package_service.logger, "Initialized");
         if self.yes_i_am_sure {
-            Ok(package_service.implode()?)
+            package_service.implode()?;
+            info!(
+                package_service.logger,
+                "Successfully removed everything Hermione"
+            );
+            Ok(())
         } else {
-            println!("I am not sure you want me to do this.");
+            error!(
+                package_service.logger,
+                "I am not sure you want me to do this."
+            );
             Err(anyhow!("Please pass confirm flag if you are sure"))
         }
     }

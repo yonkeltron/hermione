@@ -1,4 +1,5 @@
 use anyhow::Result;
+use slog::{error, info, o};
 
 use crate::action::Action;
 use crate::package_service::PackageService;
@@ -9,17 +10,21 @@ pub struct RemoveAction {
 
 impl Action for RemoveAction {
     fn execute(self, package_service: PackageService) -> Result<()> {
-        let remove_result = match package_service.get_installed_package(self.package_name.clone()) {
+        let logger = package_service
+            .logger
+            .new(o!("package" => self.package_name.clone()));
+        info!(logger, "Initialized");
+        let remove_result = match package_service.get_installed_package(self.package_name) {
             Ok(package) => package.remove(),
             Err(e) => Err(e),
         };
 
         match remove_result {
-            Ok(_success) => println!("Removed package {}", self.package_name),
-            Err(e) => eprintln!(
-                "Unable to remove {} because {}",
-                self.package_name,
-                e.to_string()
+            Ok(_success) => info!(logger, "Removal successful"),
+            Err(e) => error!(
+                logger,
+                "Unable to remove";
+                "error" => e.to_string()
             ),
         };
         Ok(())
