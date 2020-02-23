@@ -25,7 +25,9 @@ impl Scaffold {
         let author = match Config::open_default() {
             Ok(conf) => {
                 let author_name = conf.get_string("user.name").unwrap_or(default_author);
-                let author_email = conf.get_string("user.email").unwrap_or(String::from(""));
+                let author_email = conf
+                    .get_string("user.email")
+                    .unwrap_or_else(|_| String::from(""));
                 format!("{} <{}>", author_name, author_email)
             }
             Err(_) => default_author,
@@ -41,8 +43,8 @@ impl Scaffold {
         };
 
         Scaffold {
-            author: author,
-            package_name: String::from(parsed_package_name),
+            author,
+            package_name: parsed_package_name,
             version: String::from(env!("CARGO_PKG_VERSION")),
             template_string_value,
             package_path_buf: package_path.to_path_buf(),
@@ -69,7 +71,7 @@ impl Scaffold {
             Err(e) => {
                 error!(logger,
                     "Could not create package directory";
-                    "path" => self.package_path_buf.to_str().clone(),
+                    "path" => self.package_path_buf.to_str(),
                     "package" => self.package_name.clone(),
                     "operation" => "scaffold",
                 );
