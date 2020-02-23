@@ -1,13 +1,14 @@
 = Hermione
+Competent magic for your config files and more
 :toc: left
 :icons: font
 :source-highlighter: rouge
 :rouge-style: thankful_eyes
 
+Proudly written in Rust, Hermione is a package manager for your config files.
 
-== Competent magic for your dotfiles and more
+WARNING: This is *highly* experimental software and while we've done everything we can to ensure that it won't eat your stuff alive, please don't use it to manage anything critical right now.
 
-Proudly written in Rust.
 
 == Installation
 
@@ -18,9 +19,25 @@ Currently only available via Cargo, the Rust build tool and package manager.
 $ cargo install hermione
 ....
 
+How else would you like to install it? Homebrew on macOS? A Debian package? Just let us know!
+
 == Getting started
+
+You use Hermione to install packages of config files, try it out by installing `sensibility`, our recommended package of default config files good for any Unix-like system.
 
 [source,bash]
 ....
 $ herm install hermione-hub/sensibility
 ....
+
+== ToDo
+
+There's plenty of work left to do on Hermione and we might never be done as long as we've got users.
+
+* Package repository support.
+* Package upgrade support.
+* Better automated test suite.
+** We need help with this one, so anyone skilled in writing tests for CLI utils should get in touch.
+* Improved command-line interface UX.
+* Improved error messages and more consistent output.
+* Better package selection.
