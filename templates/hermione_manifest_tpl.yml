@@ -8,7 +8,7 @@ author: "{{scaffold.author}}"
 mappings:
 # Hermione injects your $HOME env for convience
 # you can also reference absolute path
-#  - i: "sample.txt"
-#    o: "{{"{{HOME}}/sample.txt"}}""
-#  - i: "other.conf"
-#    o: "/absolute/path/to/dir/other.conf"
+ - i: "sample.txt"
+   o: "{{"{{HOME}}/sample.txt"}}"
+ - i: "config.toml"
+   o: "/tmp/absolute/path/to/dir/config.toml"
