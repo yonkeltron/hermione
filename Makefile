@@ -18,6 +18,9 @@ test:
 check:
 > cargo clippy
 
+ready:
+> gem install asciidoctor rouge
+
 site:
 > mkdir -p $(PUBLIC_PATH)
 > asciidoctor README.adoc -o $(PUBLIC_PATH)/index.html

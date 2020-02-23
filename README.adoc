@@ -1,6 +1,9 @@
 = Hermione
 :toc: left
 :icons: font
+:source-highlighter: rouge
+:rouge-style: thankful_eyes
+
 
 == Competent magic for your dotfiles and more
 
