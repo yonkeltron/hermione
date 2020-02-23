@@ -112,8 +112,8 @@ fn main() -> Result<()> {
     };
 
     match matches.subcommand() {
-        ("init", Some(generate_matches)) => {
-            let manifest_path = generate_matches
+        ("init", Some(init_matches)) => {
+            let manifest_path = init_matches
                 .value_of("MANIFEST_PATH")
                 .expect("No manifest path provided");
 
@@ -150,8 +150,8 @@ fn main() -> Result<()> {
             let name = String::from(package_name);
             actions::remove_action::RemoveAction { package_name: name }.execute(package_service)?;
         }
-        ("new", Some(create_matches)) => {
-            let package_name = create_matches
+        ("new", Some(new_matches)) => {
+            let package_name = new_matches
                 .value_of("PACKAGE_NAME")
                 .expect("No package name provided");
 
