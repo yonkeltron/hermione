@@ -7,6 +7,7 @@ readme = "README.adoc"
 homepage = "https://github.com/yonkeltron/hermione"
 repository = "https://github.com/yonkeltron/hermione"
 license = "Apache-2.0"
+exclude = ["assets", "public"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
