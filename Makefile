@@ -10,8 +10,14 @@ ifeq ($(origin .RECIPEPREFIX), undefined)
 endif
 .RECIPEPREFIX = >
 
+PUBLIC_PATH = public
+
 test:
 > cargo test -- --test-threads=1
 
 check:
 > cargo clippy
+
+site:
+> mkdir -p $(PUBLIC_PATH)
+> asciidoctor README.adoc -o $(PUBLIC_PATH)/index.html

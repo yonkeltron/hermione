@@ -1,5 +1,23 @@
-# Hermione
+= Hermione
+:toc: left
+:icons: font
 
-## Competent magic for your dotfiles and more
+== Competent magic for your dotfiles and more
 
 Proudly written in Rust.
+
+== Installation
+
+Currently only available via Cargo, the Rust build tool and package manager.
+
+[source,bash]
+....
+$ cargo install hermione
+....
+
+== Getting started
+
+[source,bash]
+....
+$ herm install hermione-hub/sensibility
+....
