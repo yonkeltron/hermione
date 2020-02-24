@@ -34,13 +34,7 @@ fn main() -> Result<()> {
             SubCommand::with_name("init")
                 .about("initialize Hermione manifest file")
                 .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS"))
-                .arg(
-                    Arg::with_name("MANIFEST_PATH")
-                        .help("path to place Hermione manifest file")
-                        .required(true)
-                        .index(1),
-                ),
+                .author(env!("CARGO_PKG_AUTHORS")),
         )
         .subcommand(
             SubCommand::with_name("install")
@@ -112,15 +106,8 @@ fn main() -> Result<()> {
     };
 
     match matches.subcommand() {
-        ("init", Some(init_matches)) => {
-            let manifest_path = init_matches
-                .value_of("MANIFEST_PATH")
-                .expect("No manifest path provided");
-
-            actions::init_action::InitAction {
-                manifest_path: String::from(manifest_path),
-            }
-            .execute(package_service)?;
+        ("init", Some(_init_matches)) => {
+            actions::init_action::InitAction {}.execute(package_service)?;
         }
         ("install", Some(install_matches)) => {
             let package_source = install_matches
