@@ -244,10 +244,10 @@ mod tests {
 
     use std::fs;
 
-    use crate::logger::create_default_logger;
+    use crate::logger::create_testing_logger;
 
     fn purge() {
-        let package_service = PackageService::new(create_default_logger())
+        let package_service = PackageService::new(create_testing_logger())
             .expect("Unable to instantiate PackageService in test");
         package_service
             .implode()
@@ -257,7 +257,7 @@ mod tests {
     #[test]
     fn test_list_installed_packages_with_nothing() {
         defer!(purge());
-        let package_service = PackageService::new(create_default_logger())
+        let package_service = PackageService::new(create_testing_logger())
             .expect("Unable to instantiate PackageService in test");
         let installed_package_list = package_service
             .list_installed_packages()
@@ -270,13 +270,13 @@ mod tests {
         defer!(purge());
 
         let src = String::from("./example-package");
-        let package_service = PackageService::new(create_default_logger())
+        let package_service = PackageService::new(create_testing_logger())
             .expect("Unable to instantiate PackageService in test");
         package_service
             .download_and_install(src)
             .expect("Unable to instantiate package in test");
 
-        let test_package_service = PackageService::new(create_default_logger())
+        let test_package_service = PackageService::new(create_testing_logger())
             .expect("Unable to instantiate PackageService in test");
         let installed_package_list = test_package_service
             .list_installed_packages()
@@ -305,7 +305,7 @@ mod tests {
         defer!(purge());
 
         let src = String::from("./example-package");
-        let package_service = PackageService::new(create_default_logger())
+        let package_service = PackageService::new(create_testing_logger())
             .expect("Unable to instantiate PackageService in test");
         let package = package_service
             .download(src)
@@ -319,14 +319,14 @@ mod tests {
         defer!(purge());
 
         let src = String::from("./example-package");
-        let package_service = PackageService::new(create_default_logger())
+        let package_service = PackageService::new(create_testing_logger())
             .expect("Unable to instantiate PackageService in test");
 
         package_service
             .download_and_install(src)
             .expect("Unable to instantiate package in test");
 
-        let test_package_service = PackageService::new(create_default_logger())
+        let test_package_service = PackageService::new(create_testing_logger())
             .expect("Unable to instantiate PackageService in test");
 
         let installed_path = test_package_service
@@ -341,14 +341,14 @@ mod tests {
 
         let package_name = "example-package";
 
-        let package_service: PackageService = PackageService::new(create_default_logger())
+        let package_service: PackageService = PackageService::new(create_testing_logger())
             .expect("Could not create package service in test");
 
         package_service
             .download_and_install("./example-package".to_string())
             .expect("Failed to install package in test");
 
-        let test_package_service = PackageService::new(create_default_logger())
+        let test_package_service = PackageService::new(create_testing_logger())
             .expect("Unable to instantiate PackageService in test");
 
         let actual = test_package_service
@@ -361,7 +361,7 @@ mod tests {
 
     #[quickcheck]
     fn from_package_name_with_bogus_package_always_fails(name: String) -> bool {
-        let package_service: PackageService = PackageService::new(create_default_logger())
+        let package_service: PackageService = PackageService::new(create_testing_logger())
             .expect("Could not create package service in test");
         package_service.get_installed_package(name).is_err()
     }

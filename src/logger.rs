@@ -4,8 +4,15 @@ use slog_json::Json;
 use slog_term::{FullFormat, TermDecorator};
 
 #[cfg(test)]
-pub fn create_default_logger() -> Logger {
-    create_logger("human", Level::Trace)
+pub fn create_testing_logger() -> Logger {
+    use std::str::FromStr;
+    let log_level_env = std::env::var("HERMIONE_TEST_LOG_LEVEL");
+    let log_level_string = log_level_env
+        .as_ref()
+        .map(String::as_str)
+        .unwrap_or("Critical");
+    let log_level = Level::from_str(&log_level_string).unwrap_or(Level::Critical);
+    create_logger("human", log_level)
 }
 
 pub fn create_logger(format: &str, level: Level) -> Logger {

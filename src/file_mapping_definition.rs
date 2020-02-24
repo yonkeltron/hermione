@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use tera::{Context, Tera};
 
-use std::path::{Path,PathBuf};
+use std::path::{Path, PathBuf};
 
 use crate::file_mapping::FileMapping;
 use crate::package_service::PackageService;
@@ -14,6 +14,9 @@ pub struct FileMappingDefinition {
 }
 
 impl FileMappingDefinition {
+    pub fn new(i: String, o: String) -> Self {
+        FileMappingDefinition { i, o }
+    }
     pub fn render_file_mapping(
         self,
         package_service: &PackageService,

@@ -11,6 +11,7 @@ mod installed_package;
 mod logger;
 mod manifest;
 mod package_service;
+mod scaffold;
 
 use crate::action::Action;
 use crate::logger::create_logger;
@@ -28,6 +29,12 @@ fn main() -> Result<()> {
                 .possible_values(&["human", "json", "prettyjson"])
                 .default_value("human")
                 .global(true),
+        )
+        .subcommand(
+            SubCommand::with_name("init")
+                .about("initialize Hermione manifest file")
+                .version(env!("CARGO_PKG_VERSION"))
+                .author(env!("CARGO_PKG_AUTHORS")),
         )
         .subcommand(
             SubCommand::with_name("install")
@@ -73,6 +80,18 @@ fn main() -> Result<()> {
                         .index(1),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("new")
+                .about("generate new Hermione package")
+                .version(env!("CARGO_PKG_VERSION"))
+                .author(env!("CARGO_PKG_AUTHORS"))
+                .arg(
+                    Arg::with_name("PACKAGE_NAME")
+                        .help("package name")
+                        .required(true)
+                        .index(1),
+                ),
+        )
         .get_matches();
 
     let format = matches
@@ -87,6 +106,9 @@ fn main() -> Result<()> {
     };
 
     match matches.subcommand() {
+        ("init", Some(_init_matches)) => {
+            actions::init_action::InitAction {}.execute(package_service)?;
+        }
         ("install", Some(install_matches)) => {
             let package_source = install_matches
                 .value_of("SOURCE")
@@ -114,6 +136,16 @@ fn main() -> Result<()> {
 
             let name = String::from(package_name);
             actions::remove_action::RemoveAction { package_name: name }.execute(package_service)?;
+        }
+        ("new", Some(new_matches)) => {
+            let package_name = new_matches
+                .value_of("PACKAGE_NAME")
+                .expect("No package name provided");
+
+            actions::new_action::NewAction {
+                package_name: String::from(package_name),
+            }
+            .execute(package_service)?;
         }
         (subcommand, _) => error!(
             package_service.logger,
