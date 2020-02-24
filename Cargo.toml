@@ -1,7 +1,7 @@
 [package]
 name = "hermione"
 version = "0.1.0"
-authors = ["Jonathan E. Magen <yonkeltron@gmail.com>"]
+authors = ["Jonathan E. Magen <yonkeltron@gmail.com>", "Egli Hila <eggfoobar@gmail.com>"]
 edition = "2018"
 description = "Competent magic for your config files and more"
 readme = "README.adoc"
