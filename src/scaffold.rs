@@ -1,22 +1,16 @@
 use anyhow::{anyhow, Result};
 use git2::Config;
-use serde::{Deserialize, Serialize};
 use serde_yaml;
 use slog::{error, info, Logger};
 
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::file_mapping::FileMapping;
+use crate::file_mapping_definition::FileMappingDefinition;
+use crate::manifest::Manifest;
 
-#[derive(Serialize, Deserialize)]
 pub struct Scaffold {
-    pub author: String,
-    pub package_name: String,
-    pub description: String,
-    pub mappings: Vec<FileMapping>,
-
-    #[serde(skip)]
+    pub manifest: Manifest,
     pub package_path_buf: PathBuf,
 }
 
@@ -45,26 +39,28 @@ impl Scaffold {
         };
 
         Scaffold {
-            author,
-            package_name: parsed_package_name,
-            description: default_description,
             package_path_buf: package_path.to_path_buf(),
-            mappings: vec![
-                FileMapping::new(
-                    Path::new("sample.txt").to_path_buf(),
-                    Path::new("{{HOME}}/sample.txt").to_path_buf(),
-                ),
-                FileMapping::new(
-                    Path::new("config.toml").to_path_buf(),
-                    Path::new("/tmp/absolute/path/to/dir/config.toml").to_path_buf(),
-                ),
-            ],
+            manifest: Manifest {
+                author,
+                name: parsed_package_name,
+                description: default_description,
+                mappings: vec![
+                    FileMappingDefinition::new(
+                        String::from("sample.txt"),
+                        String::from("{{HOME}}/sample.txt"),
+                    ),
+                    FileMappingDefinition::new(
+                        String::from("config.toml"),
+                        String::from("/tmp/absolute/path/to/dir/config.toml"),
+                    ),
+                ],
+            },
         }
     }
 
     pub fn create_package(&self, logger: &Logger) -> Result<()> {
         info!(logger, "Creating package directory";
-            "package" => &self.package_name,
+            "package" => &self.manifest.name,
             "operation" => "scaffold",
         );
 
@@ -73,7 +69,7 @@ impl Scaffold {
                 info!(
                     logger,
                     "Successfully created package directory";
-                    "package" => self.package_name.clone(),
+                    "package" => self.manifest.name.clone(),
                     "operation" => "scaffold",
                 );
                 self.create_manifest(self.package_path_buf.to_path_buf(), logger)?;
@@ -84,7 +80,7 @@ impl Scaffold {
                 error!(logger,
                     "Could not create package directory";
                     "path" => self.package_path_buf.to_str(),
-                    "package" => self.package_name.clone(),
+                    "package" => self.manifest.name.clone(),
                     "operation" => "scaffold",
                 );
                 Err(anyhow!(e))
@@ -96,18 +92,18 @@ impl Scaffold {
         info!(
             logger,
             "Creating manifest file";
-            "package" => self.package_name.clone(),
+            "package" => self.manifest.name.clone(),
             "operation" => "scaffold",
         );
 
-        let hermione_string = serde_yaml::to_string(&self)?;
+        let hermione_string = serde_yaml::to_string(&self.manifest)?;
         let hermione_manifest_path = path.join("hermione.yml");
 
         if hermione_manifest_path.is_file() {
             error!(
                 logger,
                 "hermione.yml already exists in current directory, will not overwrite";
-                "package" => self.package_name.clone(),
+                "package" => self.manifest.name.clone(),
                 "operation" => "scaffold",
                 "hermione_manifest_path" => hermione_manifest_path.to_str(),
             );
@@ -117,7 +113,7 @@ impl Scaffold {
             info!(
                 logger,
                 "Successfully created hermione manifest file";
-                "package" => self.package_name.clone(),
+                "package" => self.manifest.name.clone(),
                 "operation" => "scaffold",
                 "hermione_manifest_path" => hermione_manifest_path.to_str(),
             );
@@ -127,7 +123,7 @@ impl Scaffold {
 
     fn create_example_files(&self, logger: &Logger) -> Result<()> {
         info!(logger, "Creating example files";
-        "package" => self.package_name.clone(),
+        "package" => self.manifest.name.clone(),
         "operation" => "scaffold");
 
         let sample_file_path = self.package_path_buf.join("sample.txt");
@@ -142,7 +138,7 @@ impl Scaffold {
         )?;
 
         info!(logger, "Finished creating example files";
-        "package" => self.package_name.clone(),
+        "package" => self.manifest.name.clone(),
         "operation" => "scaffold");
         Ok(())
     }

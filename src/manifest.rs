@@ -10,6 +10,7 @@ use crate::file_mapping_definition::FileMappingDefinition;
 pub struct Manifest {
     pub name: String,
     pub author: String,
+    pub description: String,
     pub mappings: Vec<FileMappingDefinition>,
 }
 
