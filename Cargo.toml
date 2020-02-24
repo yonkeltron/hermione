@@ -20,10 +20,10 @@ anyhow = "1.0"
 clap = "2.33"
 colored = "1.9.2"
 fs_extra = "1.1.0"
-git2 = "0.10"
+git2 = "0.11"
 serde = { version = "1.0.104", features = ["derive"] }
-serde_yaml = "0.8"
-tera = "1"
+serde_yaml = "0.8.11"
+tera = "1.0.2"
 directories = "2.0.2"
 slog = { version = "2.5.2", features = ["max_level_trace", "release_max_level_info"] }
 slog-async = "2.4.0"
