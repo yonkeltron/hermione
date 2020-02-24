@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context, Result};
-use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 use quickcheck_macros::quickcheck;
@@ -7,7 +6,7 @@ use quickcheck_macros::quickcheck;
 use std::fs;
 use std::path::PathBuf;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq)]
 pub struct FileMapping {
     i: PathBuf,
     o: PathBuf,
