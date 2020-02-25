@@ -5,18 +5,29 @@ use quickcheck_macros::quickcheck;
 
 use std::fs;
 use std::path::PathBuf;
-
+/// Describes the file mapping between input `i` and output `o`.
+/// This struct is responsible for installing and uninstalling a file.
 #[derive(Debug, PartialEq)]
 pub struct FileMapping {
+    /// input PathBuf - What the desired file.
     i: PathBuf,
+    /// output PathBuf - Where you would like it to go.
     o: PathBuf,
 }
 
 impl FileMapping {
+    /// Returns an instance of FileMapping
+    ///
+    /// ### Arguments
+    ///
+    /// * i - `PathBuf` of the input file path
+    /// * o - `PathBuf` of the output file path
+    ///
     pub fn new(i: PathBuf, o: PathBuf) -> Self {
         Self { i, o }
     }
 
+    /// Returns String print out of File Mapping
     pub fn display_line(&self) -> String {
         format!(
             "Copying {} -> {}",
@@ -25,6 +36,9 @@ impl FileMapping {
         )
     }
 
+    /// Installs the input file to the output path
+    ///
+    /// Returns String Result
     pub fn install(&self) -> Result<String> {
         let copy_file = self.i.exists() && !self.o.exists();
         match self.o.parent() {
@@ -58,6 +72,9 @@ impl FileMapping {
         }
     }
 
+    /// Uninstalls the output path defined in the manifest
+    ///
+    /// Returns String Result
     pub fn uninstall(self) -> Result<String> {
         if self.o.is_file() {
             fs::remove_file(&self.o)?;

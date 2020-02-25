@@ -4,6 +4,7 @@ use slog::info;
 use crate::action::Action;
 use crate::package_service::PackageService;
 
+/// Install Action installs a given Hermione package.
 pub struct InstallAction {
     pub package_source: String,
 }

@@ -9,12 +9,14 @@ use std::path::{Path, PathBuf};
 use crate::file_mapping_definition::FileMappingDefinition;
 use crate::manifest::Manifest;
 
+/// Scaffold is responsible for creating `hermione.yml` files and new Hermione package directories
 pub struct Scaffold {
     pub manifest: Manifest,
     pub package_path_buf: PathBuf,
 }
 
 impl Scaffold {
+    /// Returns an instance of Scaffold with a default Manifest for creating a `hermione.yml` file.
     pub fn new(package_name: &str) -> Self {
         let default_author = String::from("<Author Name>");
         let default_description = format!(
@@ -58,6 +60,7 @@ impl Scaffold {
         }
     }
 
+    /// Creates a package directory with a sample `hermione.yml` file and a couple of sample files to correspond with it.
     pub fn create_package(&self, logger: &Logger) -> Result<()> {
         info!(logger, "Creating package directory";
             "package" => &self.manifest.name,
@@ -88,6 +91,14 @@ impl Scaffold {
         }
     }
 
+    /// Creates the `hermione.yml` file from the Manifest struct and writes it to the given PathBuf.
+    ///
+    /// ### Arguments
+    ///
+    /// * path - PathBuf of where to write the `hermione.yml` file
+    /// * logger - Borrowed Logger instance
+    ///
+    /// Returns an Empty Result
     pub fn create_manifest(&self, path: PathBuf, logger: &Logger) -> Result<()> {
         info!(
             logger,
@@ -121,6 +132,13 @@ impl Scaffold {
         }
     }
 
+    /// Creates the Hermione sample files.
+    ///
+    /// ### Arguments
+    ///
+    /// * logger - Borrowed Logger instance
+    ///
+    /// Returns an Empty Result
     fn create_example_files(&self, logger: &Logger) -> Result<()> {
         info!(logger, "Creating example files";
         "package" => self.manifest.name.clone(),
