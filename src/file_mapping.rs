@@ -9,25 +9,25 @@ use std::path::PathBuf;
 /// This struct is responsible for installing and uninstalling a file.
 #[derive(Debug, PartialEq)]
 pub struct FileMapping {
-    /// input PathBuf - What the desired file.
+    /// input PathBuf - Where is the desired file in the package.
     i: PathBuf,
-    /// output PathBuf - Where you would like it to go.
+    /// output PathBuf - Where you would like it to go on the system.
     o: PathBuf,
 }
 
 impl FileMapping {
-    /// Returns an instance of FileMapping
+    /// Returns an instance of FileMapping.
     ///
     /// ### Arguments
     ///
-    /// * i - `PathBuf` of the input file path
-    /// * o - `PathBuf` of the output file path
+    /// * i - `PathBuf` of the input file path.
+    /// * o - `PathBuf` of the output file path.
     ///
     pub fn new(i: PathBuf, o: PathBuf) -> Self {
         Self { i, o }
     }
 
-    /// Returns String print out of File Mapping
+    /// Returns String print out of File Mapping.
     pub fn display_line(&self) -> String {
         format!(
             "Copying {} -> {}",
@@ -36,9 +36,9 @@ impl FileMapping {
         )
     }
 
-    /// Installs the input file to the output path
+    /// Installs the input file to the output path.
     ///
-    /// Returns String Result
+    /// Returns String as a Result.
     pub fn install(&self) -> Result<String> {
         let copy_file = self.i.exists() && !self.o.exists();
         match self.o.parent() {

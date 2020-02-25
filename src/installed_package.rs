@@ -8,23 +8,23 @@ use crate::manifest::Manifest;
 use crate::package_service::PackageService;
 
 /// Installed state of a package.
-/// This means that a package downloaded and the
+/// This means that a package has been downloaded and the
 /// files in the manifest have been installed in their corresponding spot.
 pub struct InstalledPackage {
-    /// Local PathBuf of the installed package
+    /// Local PathBuf of the installed package.
     pub local_path: PathBuf,
-    /// Package name
+    /// Package name.
     pub package_name: String,
-    /// Instance of PackageService
+    /// Instance of PackageService.
     pub package_service: PackageService,
 }
 
 impl InstalledPackage {
     /// Removes a given package.
     /// First we try to remove all the files it installed in the
-    /// manifest before we remove the package itself.
+    /// manifest before we remove the package directory itself.
     ///
-    /// Returns bool Result
+    /// Returns bool as a Result.
     pub fn uninstall(&self) -> Result<bool> {
         let manifest_path = self.local_path.join("hermione.yml");
         info!(
@@ -49,9 +49,9 @@ impl InstalledPackage {
     }
 
     /// Removed the package directory it self after the files of this
-    /// package have been successfully uninstalled
+    /// package have been successfully uninstalled.
     ///
-    /// Returns bool Result
+    /// Returns bool as a Result.
     pub fn remove(self) -> Result<bool> {
         self.uninstall()?;
 

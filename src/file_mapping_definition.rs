@@ -10,29 +10,29 @@ use crate::package_service::PackageService;
 /// Mapping Definitions are where you put the input `i` files and the output `o` location
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct FileMappingDefinition {
-    /// Input file path - What the desired file.
+    /// Input file path - Where is the desired file in the package.
     i: String,
-    /// Output file path - Where you would like it to go.
+    /// Output file path - Where you would like it to go on the system.
     o: String,
 }
 
 impl FileMappingDefinition {
-    /// Return a new FileMappingDefinition
+    /// Return a new FileMappingDefinition.
     ///
     /// ### Arguments
     ///
-    /// * `i` - Input file path
-    /// * `o` - Output file path
+    /// * `i` - `String` input file path.
+    /// * `o` - `String` output file path.
     pub fn new(i: String, o: String) -> Self {
         FileMappingDefinition { i, o }
     }
 
-    /// Returns a FileMapping
+    /// Returns a FileMapping.
     ///
     /// ### Arguments
     ///
-    /// * package_service - Borrowed reference to PackageService
-    /// * package_path_buf - Root path of your package
+    /// * package_service - Borrowed reference to PackageService.
+    /// * package_path_buf - Root path of your package.
     pub fn render_file_mapping(
         self,
         package_service: &PackageService,

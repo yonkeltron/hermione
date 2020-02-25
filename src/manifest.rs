@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use crate::file_mapping_definition::FileMappingDefinition;
 
-/// Manifest represents the definition of your Hermione package
+/// Manifest represents the definition of your Hermione package.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Manifest {
     /// Name of your package 📦.
@@ -22,7 +22,7 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    /// Generates a Manifest struct from a given `hermione.yml` path
+    /// Generates a Manifest struct from a given `hermione.yml` path.
     pub fn new_from_path(path: PathBuf) -> Result<Manifest> {
         if path.is_file() {
             let yaml = fs::read_to_string(path)?;

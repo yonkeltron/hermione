@@ -29,13 +29,13 @@ pub struct PackageService {
 }
 
 impl PackageService {
-    /// Create a new PackageService
+    /// Create a new PackageService.
     ///
     /// ### Arguments
     ///
-    /// * logger - Instance of Logger
+    /// * logger - Instance of Logger.
     ///
-    /// Returns an instance of PackageService.
+    /// Returns an instance of PackageService as a Result.
     pub fn new(logger: Logger) -> Result<Self> {
         Ok(PackageService {
             project_dirs: Self::project_dirs()?,
@@ -44,6 +44,8 @@ impl PackageService {
     }
 
     /// Creates the download and install dir for the respective OS.
+    ///
+    /// Returns a bool as a Result.
     pub fn init(&self) -> Result<bool> {
         let d_dir = self.download_dir();
         if !d_dir.is_dir() {
@@ -96,7 +98,7 @@ impl PackageService {
     ///
     /// * package_name - The package name must not be the path, but rather the name you called the hermione folder
     ///
-    /// Returns an InstalledPackage in a Result.
+    /// Returns an InstalledPackage as a Result.
     pub fn get_installed_package(self, package_name: String) -> Result<InstalledPackage> {
         let package_path = self.installed_package_path(&package_name)?;
 
@@ -113,7 +115,7 @@ impl PackageService {
     ///
     /// * package_name - The package name must not be the path, but rather the name you called the hermione folder
     ///
-    /// Returns an PathBuf in a Result.
+    /// Returns an PathBuf as a Result.
     pub fn installed_package_path(&self, package_name: &str) -> Result<PathBuf> {
         let path = self.install_dir().join(package_name);
         if path.is_dir() && !package_name.trim().is_empty() {
@@ -125,7 +127,7 @@ impl PackageService {
         }
     }
 
-    /// Returns a vector of InstalledPackage in a Result
+    /// Returns a vector of InstalledPackage as a Result
     pub fn list_installed_packages(&self) -> Result<Vec<InstalledPackage>> {
         if !self.install_dir().exists() {
             let r: Vec<InstalledPackage> = Vec::new();
@@ -154,6 +156,8 @@ impl PackageService {
     /// This returns a ProjectDirs object for the respective OS.
     /// We avoid hard coding OS specific information when dealing with Paths and rely
     /// on the [directories](https://crates.io/crates/directories) to get the respective paths.
+    ///
+    /// Returns an instance of ProjectDirs as a Result.
     pub fn project_dirs() -> Result<ProjectDirs> {
         match ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION) {
             Some(pd) => Ok(pd),
@@ -167,7 +171,7 @@ impl PackageService {
     ///
     /// * src - Location of the Hermione package as a local path.
     ///
-    /// Returns an InstalledPackage in a Result.
+    /// Returns an InstalledPackage as a Result.
     pub fn download_and_install(self, src: String) -> Result<InstalledPackage> {
         let downloaded_package = self.download(src)?;
         Ok(downloaded_package.install()?)
@@ -179,7 +183,7 @@ impl PackageService {
     ///
     /// * src - Location of the Hermione package as a local path.
     ///
-    /// Returns an DownloadedPackage in a Result.
+    /// Returns an DownloadedPackage as a Result.
     pub fn download(self, src: String) -> Result<DownloadedPackage> {
         let path = Path::new(&src).canonicalize()?;
         let package_name = Self::source_to_package_name(&src);
@@ -235,6 +239,8 @@ impl PackageService {
     /// remove at their own discretion as it requires attention to fully delete.
     /// This will normally be a problem due to file permission changes since the package was installed,
     /// or more likely that a file defined in the hermione package was manually removed or altered after the fact.
+    ///
+    /// Returns an empty Result.
     pub fn purge_installed_packages(&self) -> Result<()> {
         info!(self.logger, "Started removing all installed packages");
         let errored_uninstalled = self
@@ -258,6 +264,8 @@ impl PackageService {
     }
 
     /// Implode will call `purge_installed_packages` and then if all was successful it will remove the download directory.
+    ///
+    /// Returns an empty Result.
     pub fn implode(&self) -> Result<()> {
         match self.purge_installed_packages() {
             Ok(_) => {

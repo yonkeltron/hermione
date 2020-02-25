@@ -9,7 +9,7 @@ use crate::manifest::Manifest;
 use crate::package_service::PackageService;
 
 /// Downloaded state of a package.
-/// This means that a package downloaded in cache
+/// This means that a package is downloaded in cache
 /// but not currently installed.
 pub struct DownloadedPackage {
     pub local_path: PathBuf,

@@ -98,7 +98,7 @@ impl Scaffold {
     /// * path - PathBuf of where to write the `hermione.yml` file
     /// * logger - Borrowed Logger instance
     ///
-    /// Returns an Empty Result
+    /// Returns an Empty Result.
     pub fn create_manifest(&self, path: PathBuf, logger: &Logger) -> Result<()> {
         info!(
             logger,
@@ -138,7 +138,7 @@ impl Scaffold {
     ///
     /// * logger - Borrowed Logger instance
     ///
-    /// Returns an Empty Result
+    /// Returns an Empty Result.
     fn create_example_files(&self, logger: &Logger) -> Result<()> {
         info!(logger, "Creating example files";
         "package" => self.manifest.name.clone(),
