@@ -4,6 +4,8 @@ use slog::{error, info};
 use crate::action::Action;
 use crate::package_service::PackageService;
 
+/// Implode Action removes all installed packages and all downloaded packages,
+/// and cleans up the install directory and the download directory.
 pub struct ImplodeAction {
     pub yes_i_am_sure: bool,
 }

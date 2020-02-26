@@ -4,6 +4,7 @@ use slog::{error, info, o};
 use crate::action::Action;
 use crate::package_service::PackageService;
 
+/// Remove Action removes a currently installed Hermione Package.
 pub struct RemoveAction {
     pub package_name: String,
 }

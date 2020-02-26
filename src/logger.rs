@@ -15,6 +15,14 @@ pub fn create_testing_logger() -> Logger {
     create_logger("human", log_level)
 }
 
+/// Creates an instance of a `slog` logger.
+///
+/// ### Arguments
+///
+/// * format - Format for the output, currently supports `human` `prettyjson` and `json`
+/// * level - Log level for the printouts, default is `INFO`
+///
+/// Returns a Logger.
 pub fn create_logger(format: &str, level: Level) -> Logger {
     let decorator = TermDecorator::new().build();
 

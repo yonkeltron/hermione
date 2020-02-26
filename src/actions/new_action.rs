@@ -5,6 +5,7 @@ use crate::action::Action;
 use crate::package_service::PackageService;
 use crate::scaffold::Scaffold;
 
+/// New Action scaffolds a Hermione package directory with a `hermione.yml` file and a couple of sample files.
 pub struct NewAction {
     pub package_name: String,
 }

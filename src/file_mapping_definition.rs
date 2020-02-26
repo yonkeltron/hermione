@@ -7,16 +7,32 @@ use std::path::{Path, PathBuf};
 use crate::file_mapping::FileMapping;
 use crate::package_service::PackageService;
 
+/// Mapping Definitions are where you put the input `i` files and the output `o` location
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct FileMappingDefinition {
+    /// Input file path - Where is the desired file in the package.
     i: String,
+    /// Output file path - Where you would like it to go on the system.
     o: String,
 }
 
 impl FileMappingDefinition {
+    /// Return a new FileMappingDefinition.
+    ///
+    /// ### Arguments
+    ///
+    /// * `i` - `String` input file path.
+    /// * `o` - `String` output file path.
     pub fn new(i: String, o: String) -> Self {
         FileMappingDefinition { i, o }
     }
+
+    /// Returns a FileMapping.
+    ///
+    /// ### Arguments
+    ///
+    /// * package_service - Borrowed reference to PackageService.
+    /// * package_path_buf - Root path of your package.
     pub fn render_file_mapping(
         self,
         package_service: &PackageService,

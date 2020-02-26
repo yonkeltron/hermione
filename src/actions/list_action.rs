@@ -4,6 +4,7 @@ use slog::info;
 use crate::action::Action;
 use crate::package_service::PackageService;
 
+/// List Action displays a list of all currently installed Hermione Packages
 pub struct ListAction {}
 
 impl Action for ListAction {
