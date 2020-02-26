@@ -27,7 +27,7 @@ You use Hermione to install packages of config files, try it out by installing `
 
 [source,bash]
 ....
-$ herm install hermione-hub/sensibility
+$ herm install https://github.com/hermione-hub/sensibility.git
 ....
 
 == ToDo
