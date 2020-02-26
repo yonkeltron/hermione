@@ -1,7 +1,8 @@
 use anyhow::{anyhow, Context, Result};
 use directories::{BaseDirs, ProjectDirs};
 use fs_extra::dir;
-use slog::{error, info, Logger};
+use git2::Repository;
+use slog::{debug, error, info, Logger};
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -185,7 +186,6 @@ impl PackageService {
     ///
     /// Returns an DownloadedPackage as a Result.
     pub fn download(self, src: String) -> Result<DownloadedPackage> {
-        let path = Path::new(&src).canonicalize()?;
         let package_name = Self::source_to_package_name(&src);
         let checkout_path = self.download_dir();
 
@@ -197,29 +197,50 @@ impl PackageService {
             );
             dir::create_all(&checkout_path, false)?;
         }
-        if path.is_dir() {
-            info!(
-                self.logger,
-                "Copying Package";
-                "to_path" => checkout_path.display(),
-                "from_path" => path.display(),
-            );
-            let mut options = dir::CopyOptions::new();
-            options.copy_inside = true;
-            options.overwrite = true;
-            dir::copy(&path, &checkout_path, &options)
-                .with_context(|| format!("Error copying package to {}", checkout_path.display()))?;
 
-            Ok(DownloadedPackage {
-                local_path: checkout_path.join(&package_name),
-                package_name,
-                package_service: self,
-            })
+        if src.ends_with("git") {
+            debug!(self.logger, "Detected remote package"; "source" => &src);
+            info!(self.logger, "Cloning remote package"; "source" => &src);
+            let clone_path = checkout_path.join(&package_name);
+            match Repository::clone(&src, &clone_path) {
+                Ok(_repo) => Ok(DownloadedPackage {
+                    local_path: clone_path,
+                    package_name,
+                    package_service: self,
+                }),
+                Err(e) => Err(anyhow!(
+                    "Unable to git clone package from {} because {}",
+                    src,
+                    e
+                )),
+            }
         } else {
-            Err(anyhow!(
-                "Path to package does not exist: {}",
-                path.display()
-            ))
+            let path = Path::new(&src).canonicalize()?;
+            if path.is_dir() {
+                info!(
+                    self.logger,
+                    "Copying Package";
+                    "to_path" => checkout_path.display(),
+                    "from_path" => path.display(),
+                );
+                let mut options = dir::CopyOptions::new();
+                options.copy_inside = true;
+                options.overwrite = true;
+                dir::copy(&path, &checkout_path, &options).with_context(|| {
+                    format!("Error copying package to {}", checkout_path.display())
+                })?;
+
+                Ok(DownloadedPackage {
+                    local_path: checkout_path.join(&package_name),
+                    package_name,
+                    package_service: self,
+                })
+            } else {
+                Err(anyhow!(
+                    "Path to package does not exist: {}",
+                    path.display()
+                ))
+            }
         }
     }
 
