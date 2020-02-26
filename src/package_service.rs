@@ -1,13 +1,13 @@
 use anyhow::{anyhow, Context, Result};
 use directories::{BaseDirs, ProjectDirs};
 use fs_extra::dir;
-use git2::Repository;
 use slog::{debug, error, info, Logger};
 
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::downloaded_package::DownloadedPackage;
+use crate::git_downloader::GitDownloader;
 use crate::installed_package::InstalledPackage;
 
 const QUALIFIER: &str = "dev";
@@ -105,7 +105,7 @@ impl PackageService {
 
         Ok(InstalledPackage {
             local_path: package_path,
-            package_name: package_name,
+            package_name,
             package_service: self,
         })
     }
@@ -200,20 +200,9 @@ impl PackageService {
 
         if src.ends_with("git") {
             debug!(self.logger, "Detected remote package"; "source" => &src);
-            info!(self.logger, "Cloning remote package"; "source" => &src);
             let clone_path = checkout_path.join(&package_name);
-            match Repository::clone(&src, &clone_path) {
-                Ok(_repo) => Ok(DownloadedPackage {
-                    local_path: clone_path,
-                    package_name,
-                    package_service: self,
-                }),
-                Err(e) => Err(anyhow!(
-                    "Unable to git clone package from {} because {}",
-                    src,
-                    e
-                )),
-            }
+            let git_downloader = GitDownloader::new(clone_path, package_name, self);
+            git_downloader.download_or_update(src)
         } else {
             let path = Path::new(&src).canonicalize()?;
             if path.is_dir() {
