@@ -36,6 +36,18 @@ impl FileMapping {
         )
     }
 
+    /// Returns an error if the output file already exists.
+    pub fn pre_install_check(&self) -> Result<String> {
+        if !self.o.exists() {
+            Ok(format!("{} is valid", self.o.display()))
+        } else {
+            Err(anyhow!(
+                "Install to ({}) is NOT valid! File already exists, Hermione will not overwrite.",
+                self.o.display()
+            ))
+        }
+    }
+
     /// Installs the input file to the output path.
     ///
     /// Returns String as a Result.
@@ -60,7 +72,7 @@ impl FileMapping {
             Ok(self.display_line())
         } else if self.o.exists() {
             Err(anyhow!(
-                "{} exists and Hermoine will not overwrite it.",
+                "{} exists and Hermione will not overwrite it.",
                 self.o.display()
             ))
         } else {

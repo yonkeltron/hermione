@@ -40,7 +40,7 @@ impl Scaffold {
             None => String::from("<Package Name>"),
         };
 
-        Scaffold {
+        Self {
             package_path_buf: package_path.to_path_buf(),
             manifest: Manifest {
                 author,
