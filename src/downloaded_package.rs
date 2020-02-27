@@ -50,7 +50,9 @@ impl DownloadedPackage {
 
             let validated_mappings = self
                 .validate_mappings(mapping_render_results)
-                .with_context(|| format!("Bailing on Install! Not all file mappings are valid."))?;
+                .with_context(|| {
+                    "Bailing on Install! Not all file mappings are valid.".to_string()
+                })?;
 
             for valid_mapping in validated_mappings {
                 info!(self.package_service.logger, "{}", valid_mapping.install()?);
