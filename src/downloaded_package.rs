@@ -1,9 +1,10 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use fs_extra::dir;
-use slog::{error, info};
+use slog::info;
 
 use std::path::PathBuf;
 
+use crate::file_mapping::FileMapping;
 use crate::installed_package::InstalledPackage;
 use crate::manifest::Manifest;
 use crate::package_service::PackageService;
@@ -43,18 +44,19 @@ impl DownloadedPackage {
                 .for_each(|error| eprintln!("{:?}", error));
             Err(anyhow!("Unable to install package"))
         } else {
-            for mapping_result in mapping_render_results {
-                match mapping_result {
-                    Ok(mapping) => {
-                        info!(self.package_service.logger, "{}", mapping.install()?);
-                    }
-                    Err(e) => {
-                        error!(self.package_service.logger, "Failed to create");
-                        eprintln!("Failed to resolve files destination {}", e.to_string())
-                    }
-                }
-            }
+            info!(self.package_service.logger,
+                "Validating file mappings before install";
+                "package" => self.package_name.clone());
 
+            let validated_mappings = self
+                .validate_mappings(mapping_render_results)
+                .with_context(|| {
+                    "Bailing on Install! Not all file mappings are valid.".to_string()
+                })?;
+
+            for valid_mapping in validated_mappings {
+                info!(self.package_service.logger, "{}", valid_mapping.install()?);
+            }
             let mut copy_options = dir::CopyOptions::new();
             copy_options.copy_inside = true;
             let dest_path = self.package_service.install_dir();
@@ -87,5 +89,29 @@ impl DownloadedPackage {
                 package_service: self.package_service,
             })
         }
+    }
+
+    /// Checks that for a given vector of FileMapping results they all pass `pre_install_check()`
+    /// Errors if any one of the file mappings fails the `pre_install_check()`.
+    ///
+    /// ### Arguments
+    ///
+    /// * mappings - A vector of Result FileMappings typically from collecting `FileMappingDefinition::render_file_mapping()`.
+    ///
+    /// Returns a Vector of FileMapping as a Result.
+    fn validate_mappings(&self, mappings: Vec<Result<FileMapping>>) -> Result<Vec<FileMapping>> {
+        mappings
+            .into_iter()
+            .map(|mapping_result| {
+                let mapping = mapping_result?;
+                info!(
+                    self.package_service.logger,
+                    " + {}",
+                    mapping.pre_install_check()?;
+                    "package" => self.package_name.clone(),
+                );
+                Ok(mapping)
+            })
+            .collect::<Result<Vec<_>>>()
     }
 }

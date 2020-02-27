@@ -36,19 +36,28 @@ impl FileMapping {
         )
     }
 
+    /// Returns an error if the output file already exists.
+    pub fn pre_install_check(&self) -> Result<String> {
+        if !self.o.exists() {
+            Ok(format!("{} is valid", self.o.display()))
+        } else {
+            Err(anyhow!(
+                "Install to ({}) is NOT valid! File already exists, Hermione will not overwrite.",
+                self.o.display()
+            ))
+        }
+    }
+
     /// Installs the input file to the output path.
     ///
     /// Returns String as a Result.
     pub fn install(&self) -> Result<String> {
         let copy_file = self.i.exists() && !self.o.exists();
-        match self.o.parent() {
-            Some(parent_path) => {
-                if !parent_path.exists() {
-                    fs::create_dir_all(parent_path)?;
-                }
+        if let Some(parent_path) = self.o.parent() {
+            if !parent_path.exists() {
+                fs::create_dir_all(parent_path)?;
             }
-            None => {}
-        };
+        }
         if copy_file {
             fs::copy(&self.i, &self.o).with_context(|| {
                 format!(
@@ -60,7 +69,7 @@ impl FileMapping {
             Ok(self.display_line())
         } else if self.o.exists() {
             Err(anyhow!(
-                "{} exists and Hermoine will not overwrite it.",
+                "{} exists and Hermione will not overwrite it.",
                 self.o.display()
             ))
         } else {
