@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use fs_extra::dir;
-use slog::{error, info};
+use slog::info;
 
 use std::path::PathBuf;
 
@@ -100,24 +100,18 @@ impl DownloadedPackage {
     ///
     /// Returns a Vector of FileMapping as a Result.
     fn validate_mappings(&self, mappings: Vec<Result<FileMapping>>) -> Result<Vec<FileMapping>> {
-        let mut validated_mappings: Vec<FileMapping> = vec![];
-        for mapping_result in mappings {
-            match mapping_result {
-                Ok(mapping) => {
-                    info!(
-                        self.package_service.logger,
-                        " + {}",
-                        mapping.pre_install_check()?;
-                        "package" => self.package_name.clone(),
-                    );
-                    validated_mappings.push(mapping);
-                }
-                Err(e) => {
-                    error!(self.package_service.logger, "Failed to create");
-                    eprintln!("Failed to resolve files destination {}", e.to_string())
-                }
-            }
-        }
-        Ok(validated_mappings)
+        mappings
+            .into_iter()
+            .map(|mapping_result| {
+                let mapping = mapping_result?;
+                info!(
+                    self.package_service.logger,
+                    " + {}",
+                    mapping.pre_install_check()?;
+                    "package" => self.package_name.clone(),
+                );
+                Ok(mapping)
+            })
+            .collect::<Result<Vec<_>>>()
     }
 }
