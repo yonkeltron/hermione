@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use directories::{BaseDirs, ProjectDirs};
 use fs_extra::dir;
+use lockfile::Lockfile;
 use slog::{debug, error, info, Logger};
 
 use std::fs;
@@ -83,6 +84,20 @@ impl PackageService {
     /// Returns a PathBuf to the install directory for the respective OS.
     pub fn install_dir(&self) -> PathBuf {
         self.project_dirs.data_dir().to_path_buf()
+    }
+
+    /// Returns a lockfile path
+    pub fn lockfile(&self) -> Result<Lockfile> {
+        let lockfile_name = "hermione.lock";
+        let lockfile_path = self.install_dir().join(lockfile_name);
+
+        match Lockfile::create(lockfile_path) {
+            Ok(lockfile) => Ok(lockfile),
+            Err(e) => Err(anyhow!(
+                "Is Hermione already running? Unable to obtain lockfile because: {}",
+                e
+            )),
+        }
     }
 
     /// Returns a PathBuf to the users home directory for their respective OS.

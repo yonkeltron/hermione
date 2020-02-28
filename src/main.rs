@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::{App, Arg, SubCommand};
 use slog::{error, o, Level};
 
@@ -102,6 +102,8 @@ fn main() -> Result<()> {
     let log = create_logger(format, Level::Info).new(o!("action" => subcommand_name.clone()));
     let package_service = PackageService::new(log)?;
 
+    let lockfile = package_service.lockfile()?;
+
     if subcommand_name != "implode" {
         package_service.init()?;
     };
@@ -154,5 +156,12 @@ fn main() -> Result<()> {
         ),
     };
 
-    Ok(())
+    if subcommand_name == "implode" {
+        Ok(())
+    } else {
+        match lockfile.release() {
+            Ok(_) => Ok(()),
+            Err(e) => Err(anyhow!("Unable to release lockfile because: {}", e)),
+        }
+    }
 }
