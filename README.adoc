@@ -9,6 +9,9 @@ Proudly written in Rust, Hermione is a package manager for your config files.
 
 WARNING: This is *highly* experimental software and while we've done everything we can to ensure that it won't eat your stuff alive, please don't use it to manage anything critical right now.
 
+Are you tired of editing config files on your computer one by one? Do you wish you had an easy way to group related configs and install them on a computer? Well, Hermione is a config management tool for people who hate config management tools.
+
+Packages are just git repos with a special `hermione.yml` file in them, which describes how config files should be installed. That's it.
 
 == Installation
 
@@ -23,7 +26,7 @@ How else would you like to install it? Homebrew on macOS? A Debian package? Just
 
 == Getting started
 
-You use Hermione to install packages of config files, try it out by installing `sensibility`, our recommended package of default config files good for any Unix-like system.
+You use Hermione to install packages of config files, try it out by installing `https://github.com/hermione-hub/sensibility[sensibility]`, our recommended package of default config files good for any Unix-like system.
 
 [source,bash]
 ....
