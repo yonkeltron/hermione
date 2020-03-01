@@ -26,24 +26,40 @@ impl GitDownloader {
     }
 
     /// Clones the git repo into a specified `Self.clone_path`, if a directory of
-    /// the same package name already exists in the cache it is blown out and re-cloned.
-    ///
-    /// ### Arguments
-    ///
-    /// * src - The git repo url to download the data from.
-    ///
-    /// Returns a DownloadedPackage as a Result.
+    /// the same package name already exists in the cache it is updated.
     pub fn download_or_update(self, src: String) -> Result<DownloadedPackage> {
         if self.clone_path.is_dir() {
-            info!(self.package_service.logger, "Obliterating cached package"; "path" => &self.clone_path.display());
-            fs::remove_dir_all(&self.clone_path).with_context(|| {
-                format!(
-                    "Failed to remove cache package path {}",
-                    self.clone_path.display()
-                )
-            })?;
-        }
+            let repo = Repository::open(&self.clone_path)?;
+            let mut remote = repo
+                .find_remote("origin")
+                .or_else(|_| repo.remote_anonymous("origin"))?;
+            remote.fetch(&["master"], None, None)?;
 
+            Ok(DownloadedPackage {
+                local_path: self.clone_path,
+                package_name: self.package_name,
+                package_service: self.package_service,
+            })
+        } else {
+            self.clone_fresh(src)
+        }
+    }
+
+    /// Blow away the package path and clone it afresh from the remote `src`.
+    fn clone_fresh(self, src: String) -> Result<DownloadedPackage> {
+        info!(self.package_service.logger, "Obliterating cached package"; "path" => &self.clone_path.display());
+        fs::remove_dir_all(&self.clone_path).with_context(|| {
+            format!(
+                "Failed to remove cache package path {}",
+                self.clone_path.display()
+            )
+        })?;
+
+        self.clone(src)
+    }
+
+    /// Execute a clone against the `src` and hydrate a `DownloadedPackage` if it succeeds.
+    pub fn clone(self, src: String) -> Result<DownloadedPackage> {
         info!(self.package_service.logger, "Cloning remote package"; "source" => &src);
         match Repository::clone(&src, &self.clone_path) {
             Ok(_repo) => Ok(DownloadedPackage {
