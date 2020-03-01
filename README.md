@@ -1,7 +1,7 @@
 # Hermione: competent magic for your config files, and more
 
-![](https://img.shields.io/crates/v/hermione.svg)
-![](https://docs.rs/hermione/badge.svg)
+[![](https://img.shields.io/crates/v/hermione.svg)](https://crates.io/crates/hermione/)
+[![](https://docs.rs/hermione/badge.svg)](https://docs.rs/hermione)
 
 The perfect tool for people who hate configuration management tools, Hermione is a package manager for your config files.
 

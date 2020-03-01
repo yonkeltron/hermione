@@ -7,6 +7,10 @@ Competent magic for your config files and more
 
 Proudly written in Rust, Hermione is a package manager for your config files.
 
+https://crates.io/crates/hermione/[image:https://img.shields.io/crates/v/hermione.svg[]]
+https://docs.rs/hermione[image:https://docs.rs/hermione/badge.svg[]]
+
+
 WARNING: This is *highly* experimental software and while we've done everything we can to ensure that it won't eat your stuff alive, please don't use it to manage anything critical right now.
 
 Are you tired of editing config files on your computer one by one? Do you wish you had an easy way to group related configs and install them on a computer? Well, Hermione is a config management tool for people who hate config management tools.
