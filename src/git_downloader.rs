@@ -26,22 +26,13 @@ impl GitDownloader {
     }
 
     /// Clones the git repo into a specified `Self.clone_path`, if a directory of
-    /// the same package name already exists in the cache it is updated.
+    /// the same package name already exists in the cache it is blown away and
+    /// cloned afresh.
     pub fn download_or_update(self, src: String) -> Result<DownloadedPackage> {
         if self.clone_path.is_dir() {
-            let repo = Repository::open(&self.clone_path)?;
-            let mut remote = repo
-                .find_remote("origin")
-                .or_else(|_| repo.remote_anonymous("origin"))?;
-            remote.fetch(&["master"], None, None)?;
-
-            Ok(DownloadedPackage {
-                local_path: self.clone_path,
-                package_name: self.package_name,
-                package_service: self.package_service,
-            })
-        } else {
             self.clone_fresh(src)
+        } else {
+            self.clone(src)
         }
     }
 
@@ -58,8 +49,9 @@ impl GitDownloader {
         self.clone(src)
     }
 
-    /// Execute a clone against the `src` and hydrate a `DownloadedPackage` if it succeeds.
-    pub fn clone(self, src: String) -> Result<DownloadedPackage> {
+    /// Execute a clone against the `src` and hydrate a `DownloadedPackage` if
+    /// it succeeds.
+    fn clone(self, src: String) -> Result<DownloadedPackage> {
         info!(self.package_service.logger, "Cloning remote package"; "source" => &src);
         match Repository::clone(&src, &self.clone_path) {
             Ok(_repo) => Ok(DownloadedPackage {
