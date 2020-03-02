@@ -5,7 +5,9 @@ use lockfile::Lockfile;
 use slog::{debug, error, info, Logger};
 
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::process;
 
 use crate::downloaded_package::DownloadedPackage;
 use crate::git_downloader::GitDownloader;
@@ -87,15 +89,26 @@ impl PackageService {
     }
 
     /// Returns a lockfile path
-    pub fn lockfile(&self) -> Result<Lockfile> {
+    pub fn lockfile(&self) -> Result<Lockfile, anyhow::Error> {
         let lockfile_name = "hermione.lock";
         let lockfile_path = self.install_dir().join(lockfile_name);
 
-        match Lockfile::create(lockfile_path) {
-            Ok(lockfile) => Ok(lockfile),
-            Err(e) => Err(anyhow!(
-                "Is Hermione already running? Unable to obtain lockfile because: {}",
-                e
+        match Lockfile::create(&lockfile_path) {
+            Ok(mut lockfile) => {
+                let proc_id = format!("{}", process::id());
+                lockfile.write_all(proc_id.as_bytes()).with_context(|| {
+                    format!(
+                        "Unable to write PID to lockfile at {}",
+                        lockfile_path.display()
+                    )
+                })?;
+
+                Ok(lockfile)
+            }
+            Err(err) => Err(anyhow!(
+                "Is Hermione already running? Unable to obtain lockfile at {} because: {}",
+                lockfile_path.display(),
+                err
             )),
         }
     }
