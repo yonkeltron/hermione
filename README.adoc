@@ -17,6 +17,13 @@ Are you tired of editing config files on your computer one by one? Do you wish y
 
 Packages are just git repos with a special `hermione.yml` file in them, which describes how config files should be installed. That's it.
 
+.Hermione is
+. Competent, with a great set of features planned for now and in the future.
+. Careful, with sane defaults that aim to keep things working as they should.
+. Fast and secure, with an implementation in Rust.
+. Easy, relying on the established workflows of git and related tools.
+
+
 == Installation
 
 Currently only available via Cargo, the Rust build tool and package manager.
