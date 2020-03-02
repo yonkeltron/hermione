@@ -5,6 +5,13 @@ use quickcheck_macros::quickcheck;
 
 use std::fs;
 use std::path::PathBuf;
+
+#[cfg(target_family = "unix")]
+use std::os::unix::fs::symlink;
+
+#[cfg(target_family = "windows")]
+use std::os::windows::fs::symlink_file;
+
 /// Describes the file mapping between input `i` and output `o`.
 /// This struct is responsible for installing and uninstalling a file.
 #[derive(Debug, PartialEq)]
@@ -30,7 +37,7 @@ impl FileMapping {
     /// Returns String print out of File Mapping.
     pub fn display_line(&self) -> String {
         format!(
-            "Copying {} -> {}",
+            "Linking {} -> {}",
             self.i.to_string_lossy(),
             self.o.to_string_lossy(),
         )
@@ -52,20 +59,27 @@ impl FileMapping {
     ///
     /// Returns String as a Result.
     pub fn install(&self) -> Result<String> {
-        let copy_file = self.i.exists() && !self.o.exists();
+        let link_file = self.i.exists() && !self.o.exists();
         if let Some(parent_path) = self.o.parent() {
             if !parent_path.exists() {
                 fs::create_dir_all(parent_path)?;
             }
         }
-        if copy_file {
-            fs::copy(&self.i, &self.o).with_context(|| {
+        if link_file {
+            #[cfg(target_family = "windows")]
+            let link_result = symlink_file(&self.i, &self.o);
+
+            #[cfg(target_family = "unix")]
+            let link_result = symlink(&self.i, &self.o);
+
+            link_result.with_context(|| {
                 format!(
-                    "Failed to copy file {} -> {}",
+                    "Failed to link file {} -> {}",
                     self.i.display(),
                     self.o.display()
                 )
             })?;
+
             Ok(self.display_line())
         } else if self.o.exists() {
             Err(anyhow!(
