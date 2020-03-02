@@ -29,7 +29,7 @@ impl GitDownloader {
     /// the same package name already exists in the cache it is blown away and
     /// cloned afresh.
     pub fn download_or_update(self, src: String) -> Result<DownloadedPackage> {
-        if self.clone_path.is_dir() {
+        if self.clone_path.exists() {
             self.clone_fresh(src)
         } else {
             self.clone(src)
