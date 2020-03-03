@@ -29,7 +29,7 @@ impl InstalledPackage {
         let manifest_path = self.local_path.join("hermione.yml");
         info!(
             self.package_service.logger,
-            "Removing files defined in Manifest file";
+            "Unlinking files defined in Manifest file";
             "path" => manifest_path.display(),
         );
 
@@ -43,7 +43,7 @@ impl InstalledPackage {
         }
         info!(
             self.package_service.logger,
-            "Successfully removed files"; "package" => self.package_name.clone(),
+            "Successfully unlinked files"; "package" => self.package_name.clone(),
         );
         Ok(true)
     }
