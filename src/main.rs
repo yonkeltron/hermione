@@ -15,7 +15,6 @@ mod package_service;
 mod scaffold;
 
 use crate::action::Action;
-use crate::actions::*;
 use crate::logger::create_logger;
 use crate::package_service::PackageService;
 
@@ -171,7 +170,7 @@ fn main() -> Result<()> {
 
             actions::upgrade_action::UpgradeAction {
                 package_names: package_names
-                    .map(|s| String::from(s))
+                    .map(String::from)
                     .filter(|s| !s.is_empty())
                     .collect(),
             }

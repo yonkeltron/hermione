@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
-use git2::Repository;
-use slog::info;
+use git2::{build, Repository};
+use slog::{error, info};
 
 use std::fs;
 use std::path::PathBuf;
@@ -38,22 +38,56 @@ impl GitDownloader {
 
     /// Update does a git fetch on the latest master from remote origin
     pub fn update(self) -> Result<()> {
+        self.update_branch("origin", "master")
+    }
+
+    /// Update Branch does a git fetch on a given remote and branch
+    pub fn update_branch(self, remote: &str, branch: &str) -> Result<()> {
         let repo = Repository::open(&self.clone_path)?;
         let mut remote = repo
-            .find_remote("origin")
-            .or_else(|_| repo.remote_anonymous("origin"))
+            .find_remote(remote)
+            .or_else(|_| repo.remote_anonymous(remote))
             .with_context(|| {
                 format!(
-                    "Unable to set a remote called 'origin' for the git repo at {}",
+                    "Unable to set a remote called {} for the git repo at {}",
+                    remote,
                     self.clone_path.display()
                 )
             })?;
 
         remote
-            .fetch(&["master"], None, None)
-            .with_context(|| format!("Unable to fetch 'master'"))?;
+            .fetch(&[branch], None, None)
+            .with_context(|| format!("Unable to fetch '{}'", branch))?;
+        let fetch_head = repo.find_reference("FETCH_HEAD")?;
+        let fetch_commit = repo.reference_to_annotated_commit(&fetch_head)?;
+        let analysis = repo.merge_analysis(&[&fetch_commit])?;
 
-        Ok(())
+        if analysis.0.is_fast_forward() {
+            let ref_name = format!("refs/heads/{}", branch);
+            info!(self.package_service.logger, "Pulling latest"; "path" => &self.clone_path.display(),"ref_name" => &ref_name);
+            match repo.find_reference(&ref_name) {
+                Ok(mut r) => {
+                    let name = match r.name() {
+                        Some(s) => s.to_string(),
+                        None => String::from_utf8_lossy(r.name_bytes()).to_string(),
+                    };
+                    let ref_id = fetch_commit.id();
+                    let msg = format!("Fast-Forward: Setting {} to id: {}", name, ref_id);
+                    info!(self.package_service.logger, "Fast forward"; "path" => &self.clone_path.display(),"ref_name" => &name, "ref_id" => format!("{}",ref_id));
+                    r.set_target(ref_id, &msg)?;
+                    repo.set_head(&name)?;
+                    repo.checkout_head(Some(build::CheckoutBuilder::default().force()))?;
+                    Ok(())
+                }
+                Err(_) => {
+                    error!(self.package_service.logger, "Could not pull latest from repo"; "path" => &self.clone_path.display());
+                    Err(anyhow!("Could not pulled latest repo info"))
+                }
+            }
+        } else {
+            info!(self.package_service.logger, "Package already up to date"; "path" => &self.clone_path.display());
+            Ok(())
+        }
     }
 
     /// Blow away the package path and clone it afresh from the remote `src`.

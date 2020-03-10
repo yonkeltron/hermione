@@ -47,6 +47,12 @@ impl InstalledPackage {
             "Successfully unlinked files"; "package" => self.package_name.clone(),
         );
 
+        fs::remove_dir_all(&self.local_path)?;
+        info!(
+            self.package_service.logger,
+            "Successfully removed installed package"; "package" => self.package_name.clone(),
+        );
+
         let downloaded_path_buf = self.package_service.download_dir().join(&self.package_name);
 
         Ok(DownloadedPackage {
@@ -63,8 +69,6 @@ impl InstalledPackage {
     pub fn remove(self) -> Result<bool> {
         let downloaded_package = self.uninstall()?;
         downloaded_package.remove()?;
-
-        fs::remove_dir_all(&self.local_path)?;
 
         Ok(true)
     }

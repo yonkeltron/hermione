@@ -31,8 +31,12 @@ impl DownloadedPackage {
             .mappings
             .into_iter()
             .map(|mapping_definition| {
-                mapping_definition
-                    .render_file_mapping(&self.package_service, self.local_path.clone())
+                mapping_definition.render_file_mapping(
+                    &self.package_service,
+                    self.package_service
+                        .install_dir()
+                        .join(self.package_name.as_str()),
+                )
             })
             .collect::<Vec<_>>();
 
@@ -56,9 +60,6 @@ impl DownloadedPackage {
                     "Bailing on Install! Not all file mappings are valid.".to_string()
                 })?;
 
-            for valid_mapping in validated_mappings {
-                info!(self.package_service.logger, "{}", valid_mapping.install()?);
-            }
             let mut copy_options = dir::CopyOptions::new();
             copy_options.copy_inside = true;
             let dest_path = self.package_service.install_dir();
@@ -81,6 +82,9 @@ impl DownloadedPackage {
             dir::copy(&self.local_path, &dest_path, &copy_options)?;
             let install_path = dest_path.join(&self.package_name);
 
+            for valid_mapping in validated_mappings {
+                info!(self.package_service.logger, "{}", valid_mapping.install()?);
+            }
             info!(self.package_service.logger, "Successfully installed"; 
             "path" => install_path.display(),
             "package" => self.package_name.clone());
@@ -103,6 +107,9 @@ impl DownloadedPackage {
     ///
     /// Returns a Result of InstalledPackage
     pub fn upgrade(self) -> Result<InstalledPackage> {
+        info!(self.package_service.logger, "Started upgrade";
+        "package" => self.package_name.clone());
+
         let git_downloader = GitDownloader::new(
             self.local_path.clone(),
             self.package_name.clone(),
@@ -110,6 +117,9 @@ impl DownloadedPackage {
         );
 
         git_downloader.update()?;
+
+        info!(self.package_service.logger, "Finished fetching latest";
+        "package" => self.package_name.clone());
 
         self.install()
     }
@@ -129,7 +139,7 @@ impl DownloadedPackage {
                 let mapping = mapping_result?;
                 info!(
                     self.package_service.logger,
-                    " + {}",
+                    " ✓ {}",
                     mapping.pre_install_check()?;
                     "package" => self.package_name.clone(),
                 );
