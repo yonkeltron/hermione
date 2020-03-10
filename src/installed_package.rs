@@ -4,6 +4,7 @@ use slog::{debug, info};
 use std::fs;
 use std::path::PathBuf;
 
+use crate::downloaded_package::DownloadedPackage;
 use crate::manifest::Manifest;
 use crate::package_service::PackageService;
 
@@ -25,7 +26,7 @@ impl InstalledPackage {
     /// manifest before we remove the package directory itself.
     ///
     /// Returns bool as a Result.
-    pub fn uninstall(&self) -> Result<bool> {
+    pub fn uninstall(&self) -> Result<DownloadedPackage> {
         let manifest_path = self.local_path.join("hermione.yml");
         info!(
             self.package_service.logger,
@@ -45,7 +46,14 @@ impl InstalledPackage {
             self.package_service.logger,
             "Successfully unlinked files"; "package" => self.package_name.clone(),
         );
-        Ok(true)
+
+        let downloaded_path_buf = self.package_service.download_dir().join(&self.package_name);
+
+        Ok(DownloadedPackage {
+            local_path: downloaded_path_buf,
+            package_service: self.package_service.clone(),
+            package_name: self.package_name.clone(),
+        })
     }
 
     /// Removed the package directory it self after the files of this
@@ -53,7 +61,8 @@ impl InstalledPackage {
     ///
     /// Returns bool as a Result.
     pub fn remove(self) -> Result<bool> {
-        self.uninstall()?;
+        let downloaded_package = self.uninstall()?;
+        downloaded_package.remove()?;
 
         fs::remove_dir_all(&self.local_path)?;
 

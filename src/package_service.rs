@@ -289,7 +289,7 @@ impl PackageService {
                     self.logger,
                     "Removing"; "package" => installed_package.package_name.clone(),
                 );
-                installed_package.uninstall().unwrap_or(false)
+                installed_package.remove().unwrap_or(false)
             })
             .filter(|was_removed| !was_removed)
             .collect::<Vec<bool>>();

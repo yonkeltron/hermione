@@ -2,9 +2,11 @@ use anyhow::{anyhow, Context, Result};
 use fs_extra::dir;
 use slog::info;
 
+use std::fs;
 use std::path::PathBuf;
 
 use crate::file_mapping::FileMapping;
+use crate::git_downloader::GitDownloader;
 use crate::installed_package::InstalledPackage;
 use crate::manifest::Manifest;
 use crate::package_service::PackageService;
@@ -89,6 +91,27 @@ impl DownloadedPackage {
                 package_service: self.package_service,
             })
         }
+    }
+
+    /// Remove the downloaded directory for the specified package.
+    pub fn remove(&self) -> Result<()> {
+        fs::remove_dir_all(&self.local_path)?;
+        Ok(())
+    }
+
+    /// Upgrade the Downloaded package to the latest from the remote repo
+    ///
+    /// Returns a Result of InstalledPackage
+    pub fn upgrade(self) -> Result<InstalledPackage> {
+        let git_downloader = GitDownloader::new(
+            self.local_path.clone(),
+            self.package_name.clone(),
+            self.package_service.clone(),
+        );
+
+        git_downloader.update()?;
+
+        self.install()
     }
 
     /// Checks that for a given vector of FileMapping results they all pass `pre_install_check()`

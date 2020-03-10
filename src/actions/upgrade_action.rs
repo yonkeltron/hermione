@@ -1,12 +1,10 @@
-use anyhow::{anyhow, Context, Result};
-use git2::Repository;
-use slog::{error, info};
+use anyhow::Result;
+use slog::info;
 
 use crate::action::Action;
 use crate::package_service::PackageService;
 
-/// Implode Action removes all installed packages and all downloaded packages,
-/// and cleans up the install directory and the download directory.
+/// Upgrade Action upgrades a package
 pub struct UpgradeAction {
     pub package_names: Vec<String>,
 }
@@ -33,26 +31,8 @@ impl Action for UpgradeAction {
         };
 
         for installed_package in packages_to_upgrade {
-            installed_package.uninstall()?;
-            let repo = Repository::open(&installed_package.local_path).with_context(|| {
-                format!(
-                    "Can't open the repo at {}",
-                    installed_package.local_path.display()
-                )
-            })?;
-            let mut remote = repo
-                .find_remote("origin")
-                .or_else(|_| repo.remote_anonymous("origin"))
-                .with_context(|| {
-                    format!(
-                        "Unable to set a remote called 'origin' for the git repo at {}",
-                        installed_package.local_path.display()
-                    )
-                })?;
-            remote
-                .fetch(&["master"], None, None)
-                .with_context(|| format!("Unable to fetch 'master'"))?;
-            //installed_package.relink()?;
+            let downloaded_package = installed_package.uninstall()?;
+            downloaded_package.upgrade()?;
         }
 
         Ok(())

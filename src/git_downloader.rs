@@ -36,6 +36,26 @@ impl GitDownloader {
         }
     }
 
+    /// Update does a git fetch on the latest master from remote origin
+    pub fn update(self) -> Result<()> {
+        let repo = Repository::open(&self.clone_path)?;
+        let mut remote = repo
+            .find_remote("origin")
+            .or_else(|_| repo.remote_anonymous("origin"))
+            .with_context(|| {
+                format!(
+                    "Unable to set a remote called 'origin' for the git repo at {}",
+                    self.clone_path.display()
+                )
+            })?;
+
+        remote
+            .fetch(&["master"], None, None)
+            .with_context(|| format!("Unable to fetch 'master'"))?;
+
+        Ok(())
+    }
+
     /// Blow away the package path and clone it afresh from the remote `src`.
     fn clone_fresh(self, src: String) -> Result<DownloadedPackage> {
         info!(self.package_service.logger, "Obliterating cached package"; "path" => &self.clone_path.display());
