@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use fs_extra::dir;
-use slog::info;
+use slog::{error, info};
 
 use std::fs;
 use std::path::PathBuf;
@@ -116,12 +116,18 @@ impl DownloadedPackage {
             self.package_service.clone(),
         );
 
-        git_downloader.update()?;
-
-        info!(self.package_service.logger, "Finished fetching latest";
-        "package" => self.package_name.clone());
-
-        self.install()
+        match git_downloader.update() {
+            Ok(_) => {
+                info!(self.package_service.logger, "Finished fetching latest";
+                "package" => self.package_name.clone());
+                self.install()
+            }
+            Err(e) => {
+                error!(self.package_service.logger, "Could not upgrade package, reverting back";
+                "package" => self.package_name.clone(), "error" => e.to_string());
+                self.install()
+            }
+        }
     }
 
     /// Checks that for a given vector of FileMapping results they all pass `pre_install_check()`
