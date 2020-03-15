@@ -30,7 +30,7 @@ Currently only available via Cargo, the Rust build tool and package manager.
 
 [source,bash]
 ....
-$ cargo install hermione
+$ cargo install -f hermione
 ....
 
 How else would you like to install it? Homebrew on macOS? A Debian package? Just let us know!
