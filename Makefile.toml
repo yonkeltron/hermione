@@ -1,0 +1,20 @@
+[env]
+PUBLIC_PATH = "public"
+
+[tasks.test]
+command = "cargo"
+args = ["test", "--", "--test-threads", "1"]
+
+[tasks.check]
+command = "cargo"
+args = ["clippy"]
+
+[tasks.ready]
+command = "gem"
+args = ["install", "asciidoctor", "rouge"]
+
+[tasks.site]
+script = [
+    "mkdir -p ${PUBLIC_PATH}",
+    "asciidoctor README.adoc -o ${PUBLIC_PATH}/index.html"
+]
