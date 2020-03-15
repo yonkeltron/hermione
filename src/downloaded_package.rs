@@ -1,10 +1,12 @@
 use anyhow::{anyhow, Context, Result};
 use fs_extra::dir;
-use slog::info;
+use slog::{error, info};
 
+use std::fs;
 use std::path::PathBuf;
 
 use crate::file_mapping::FileMapping;
+use crate::git_downloader::GitDownloader;
 use crate::installed_package::InstalledPackage;
 use crate::manifest::Manifest;
 use crate::package_service::PackageService;
@@ -29,8 +31,12 @@ impl DownloadedPackage {
             .mappings
             .into_iter()
             .map(|mapping_definition| {
-                mapping_definition
-                    .render_file_mapping(&self.package_service, self.local_path.clone())
+                mapping_definition.render_file_mapping(
+                    &self.package_service,
+                    self.package_service
+                        .install_dir()
+                        .join(self.package_name.as_str()),
+                )
             })
             .collect::<Vec<_>>();
 
@@ -54,9 +60,6 @@ impl DownloadedPackage {
                     "Bailing on Install! Not all file mappings are valid.".to_string()
                 })?;
 
-            for valid_mapping in validated_mappings {
-                info!(self.package_service.logger, "{}", valid_mapping.install()?);
-            }
             let mut copy_options = dir::CopyOptions::new();
             copy_options.copy_inside = true;
             let dest_path = self.package_service.install_dir();
@@ -79,6 +82,9 @@ impl DownloadedPackage {
             dir::copy(&self.local_path, &dest_path, &copy_options)?;
             let install_path = dest_path.join(&self.package_name);
 
+            for valid_mapping in validated_mappings {
+                info!(self.package_service.logger, "{}", valid_mapping.install()?);
+            }
             info!(self.package_service.logger, "Successfully installed"; 
             "path" => install_path.display(),
             "package" => self.package_name.clone());
@@ -88,6 +94,39 @@ impl DownloadedPackage {
                 package_name: self.package_name,
                 package_service: self.package_service,
             })
+        }
+    }
+
+    /// Remove the downloaded directory for the specified package.
+    pub fn remove(&self) -> Result<()> {
+        fs::remove_dir_all(&self.local_path)?;
+        Ok(())
+    }
+
+    /// Upgrade the Downloaded package to the latest from the remote repo
+    ///
+    /// Returns a Result of InstalledPackage
+    pub fn upgrade(self) -> Result<InstalledPackage> {
+        info!(self.package_service.logger, "Started upgrade";
+        "package" => self.package_name.clone());
+
+        let git_downloader = GitDownloader::new(
+            self.local_path.clone(),
+            self.package_name.clone(),
+            self.package_service.clone(),
+        );
+
+        match git_downloader.update() {
+            Ok(_) => {
+                info!(self.package_service.logger, "Finished fetching latest";
+                "package" => self.package_name.clone());
+                self.install()
+            }
+            Err(e) => {
+                error!(self.package_service.logger, "Could not upgrade package, reverting back";
+                "package" => self.package_name.clone(), "error" => e.to_string());
+                self.install()
+            }
         }
     }
 
@@ -106,7 +145,7 @@ impl DownloadedPackage {
                 let mapping = mapping_result?;
                 info!(
                     self.package_service.logger,
-                    " + {}",
+                    " ✓ {}",
                     mapping.pre_install_check()?;
                     "package" => self.package_name.clone(),
                 );

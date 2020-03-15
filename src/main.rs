@@ -93,6 +93,19 @@ fn main() -> Result<()> {
                         .index(1),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("upgrade")
+                .about("upgrade an existing")
+                .version(env!("CARGO_PKG_VERSION"))
+                .author(env!("CARGO_PKG_AUTHORS"))
+                .arg(
+                    Arg::with_name("PACKAGE_NAMES")
+                        .help("package names")
+                        .multiple(true)
+                        .default_value("")
+                        .index(1),
+                ),
+        )
         .get_matches();
 
     let format = matches
@@ -147,6 +160,19 @@ fn main() -> Result<()> {
 
             actions::new_action::NewAction {
                 package_name: String::from(package_name),
+            }
+            .execute(package_service)?;
+        }
+        ("upgrade", Some(upgrade_matches)) => {
+            let package_names = upgrade_matches
+                .values_of("PACKAGE_NAMES")
+                .expect("Unable to read package names");
+
+            actions::upgrade_action::UpgradeAction {
+                package_names: package_names
+                    .map(String::from)
+                    .filter(|s| !s.is_empty())
+                    .collect(),
             }
             .execute(package_service)?;
         }

@@ -4,6 +4,7 @@ use slog::{debug, info};
 use std::fs;
 use std::path::PathBuf;
 
+use crate::downloaded_package::DownloadedPackage;
 use crate::manifest::Manifest;
 use crate::package_service::PackageService;
 
@@ -25,11 +26,11 @@ impl InstalledPackage {
     /// manifest before we remove the package directory itself.
     ///
     /// Returns bool as a Result.
-    pub fn uninstall(&self) -> Result<bool> {
+    pub fn uninstall(&self) -> Result<DownloadedPackage> {
         let manifest_path = self.local_path.join("hermione.yml");
         info!(
             self.package_service.logger,
-            "Removing files defined in Manifest file";
+            "Unlinking files defined in Manifest file";
             "path" => manifest_path.display(),
         );
 
@@ -43,9 +44,22 @@ impl InstalledPackage {
         }
         info!(
             self.package_service.logger,
-            "Successfully removed files"; "package" => self.package_name.clone(),
+            "Successfully unlinked files"; "package" => self.package_name.clone(),
         );
-        Ok(true)
+
+        fs::remove_dir_all(&self.local_path)?;
+        info!(
+            self.package_service.logger,
+            "Successfully removed installed package"; "package" => self.package_name.clone(),
+        );
+
+        let downloaded_path_buf = self.package_service.download_dir().join(&self.package_name);
+
+        Ok(DownloadedPackage {
+            local_path: downloaded_path_buf,
+            package_service: self.package_service.clone(),
+            package_name: self.package_name.clone(),
+        })
     }
 
     /// Removed the package directory it self after the files of this
@@ -53,9 +67,8 @@ impl InstalledPackage {
     ///
     /// Returns bool as a Result.
     pub fn remove(self) -> Result<bool> {
-        self.uninstall()?;
-
-        fs::remove_dir_all(&self.local_path)?;
+        let downloaded_package = self.uninstall()?;
+        downloaded_package.remove()?;
 
         Ok(true)
     }
