@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Hermione
+Exec=herm
+Icon=hermione
+Type=Application
+Categories=Utility;
+Terminal=true
