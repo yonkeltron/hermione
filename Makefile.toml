@@ -22,5 +22,8 @@ script = [
 [tasks.appimage]
 script = [
     "cargo install --path . --locked --root AppDir/usr",
-    "ln -s usr/bin/herm AppDir/AppRun"
+    "stat AppDir/AppRun || ln -s usr/bin/herm AppDir/AppRun",
+    "stat appimagetool-x86_64.AppImage || wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage",
+    "chmod +x appimagetool-x86_64.AppImage",
+    "./appimagetool-x86_64.AppImage AppDir"
 ]
