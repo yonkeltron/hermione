@@ -15,6 +15,8 @@ pub struct Manifest {
     pub author: String,
     /// A description of your package, short sweet and to the point.
     pub description: String,
+    /// A unique "reverse domain name" identifier for your package
+    pub id: String,
     /// Mappings define the core operation of Hermione.
     /// Here is where you define the `what` and the `where`
     /// . The what being the file you want to move and the where being where do you want to move it.
