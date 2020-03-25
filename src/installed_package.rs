@@ -38,9 +38,11 @@ impl InstalledPackage {
         debug!(self.package_service.logger, "{:#?}", &manifest);
 
         for mapping_definition in manifest.mappings {
-            let mapping = mapping_definition
-                .render_file_mapping(&self.package_service, self.local_path.clone())?;
-            info!(self.package_service.logger, "{}", mapping.uninstall()?);
+            if mapping_definition.valid_platform_family() {
+                let mapping = mapping_definition
+                    .render_file_mapping(&self.package_service, self.local_path.clone())?;
+                info!(self.package_service.logger, "{}", mapping.uninstall()?);
+            }
         }
         info!(
             self.package_service.logger,

@@ -7,6 +7,12 @@ use std::path::{Path, PathBuf};
 use crate::file_mapping::FileMapping;
 use crate::package_service::PackageService;
 
+#[cfg(target_family = "unix")]
+const PLATFORM: &str = "unix";
+
+#[cfg(target_family = "windows")]
+const PLATFORM: &str = "windows";
+
 /// Mapping Definitions are where you put the input `i` files and the output `o` location
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct FileMappingDefinition {
@@ -14,6 +20,8 @@ pub struct FileMappingDefinition {
     i: String,
     /// Output file path - Where you would like it to go on the system.
     o: String,
+    /// Specifies file mapping to occur only when matching platform
+    platform: Option<String>,
 }
 
 impl FileMappingDefinition {
@@ -23,8 +31,8 @@ impl FileMappingDefinition {
     ///
     /// * `i` - `String` input file path.
     /// * `o` - `String` output file path.
-    pub fn new(i: String, o: String) -> Self {
-        FileMappingDefinition { i, o }
+    pub fn new(i: String, o: String, platform: Option<String>) -> Self {
+        FileMappingDefinition { i, o, platform }
     }
 
     /// Returns a FileMapping.
@@ -53,6 +61,14 @@ impl FileMappingDefinition {
                 self.o,
                 e.to_string()
             )),
+        }
+    }
+
+    /// Returns true if the file mapping is for the running platform family
+    pub fn valid_platform_family(&self) -> bool {
+        match self.platform.as_ref() {
+            Some(platform) => platform == PLATFORM,
+            None => true,
         }
     }
 }

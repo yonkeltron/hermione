@@ -51,10 +51,12 @@ impl Scaffold {
                     FileMappingDefinition::new(
                         String::from("sample.txt"),
                         String::from("{{HOME}}/sample.txt"),
+                        None,
                     ),
                     FileMappingDefinition::new(
                         String::from("config.toml"),
                         String::from("/tmp/absolute/path/to/dir/config.toml"),
+                        Some(String::from("unix")),
                     ),
                 ],
             },

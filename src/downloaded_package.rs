@@ -30,6 +30,7 @@ impl DownloadedPackage {
         let mapping_render_results = manifest
             .mappings
             .into_iter()
+            .filter(|mapping_definition| mapping_definition.valid_platform_family())
             .map(|mapping_definition| {
                 mapping_definition.render_file_mapping(
                     &self.package_service,

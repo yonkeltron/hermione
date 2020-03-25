@@ -6,5 +6,6 @@ id: org.hermione.example-package
 mappings:
   - i: a.txt
     o: "{{HOME}}/panda.txt"
+    platform: windows
   - i: b.txt
     o: "{{HOME}}/bamboo.txt"
