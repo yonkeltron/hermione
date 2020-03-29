@@ -14,7 +14,7 @@ impl Action for InitAction {
     fn execute(self, package_service: PackageService) -> Result<()> {
         info!(package_service.logger, "Initialized");
         let initialize_path = Path::new(".");
-        let scaffold = Scaffold::new("<Package Name>");
+        let scaffold = Scaffold::new("<Package Name>", "com.example.package");
         scaffold.create_manifest(initialize_path.to_path_buf(), &package_service.logger)
     }
 }

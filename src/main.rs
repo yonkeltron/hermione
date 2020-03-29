@@ -91,6 +91,13 @@ fn main() -> Result<()> {
                         .help("package name")
                         .required(true)
                         .index(1),
+                )
+                .arg(
+                    Arg::with_name("PACKAGE_ID")
+                        .help("package reverse domain id <com.example.package>")
+                        .short("i")
+                        .long("id")
+                        .takes_value(true),
                 ),
         )
         .subcommand(
@@ -157,9 +164,13 @@ fn main() -> Result<()> {
             let package_name = new_matches
                 .value_of("PACKAGE_NAME")
                 .expect("No package name provided");
+            let package_id = new_matches
+                .value_of("PACKAGE_ID")
+                .unwrap_or("com.example.package");
 
             actions::new_action::NewAction {
                 package_name: String::from(package_name),
+                package_id: String::from(package_id),
             }
             .execute(package_service)?;
         }
