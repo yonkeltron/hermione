@@ -24,7 +24,7 @@ pub fn create_testing_logger() -> Logger {
 ///
 /// Returns a Logger.
 pub fn create_logger(format: &str, level: Level) -> Logger {
-    let decorator = TermDecorator::new().build();
+    let decorator = TermDecorator::new().stdout().build();
 
     let drain = match format {
         "human" => {
