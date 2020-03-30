@@ -187,10 +187,13 @@ fn main() -> Result<()> {
             }
             .execute(package_service)?;
         }
-        (subcommand, _) => error!(
-            package_service.logger,
-            "Unknown subcommand '{}'", subcommand
-        ),
+        (subcommand, _) => {
+            error!(
+                package_service.logger,
+                "Unknown subcommand '{}'", subcommand
+            );
+            Err(anyhow!("Unknown subcommand. Try 'help'"))?;
+        }
     };
 
     if subcommand_name == "implode" {
