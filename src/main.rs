@@ -62,6 +62,19 @@ fn main() -> Result<()> {
                 ),
         )
         .subcommand(
+            SubCommand::with_name("info")
+                .about("get info about an installed Hermione package")
+                .version(env!("CARGO_PKG_VERSION"))
+                .author(env!("CARGO_PKG_AUTHORS"))
+                .alias("uninstall")
+                .arg(
+                    Arg::with_name("PACKAGE")
+                        .help("name of installed package")
+                        .required(true)
+                        .index(1),
+                ),
+        )
+        .subcommand(
             SubCommand::with_name("list")
                 .about("lists installed Hermione packages")
                 .alias("ls")
@@ -131,6 +144,15 @@ fn main() -> Result<()> {
     match matches.subcommand() {
         ("init", Some(_init_matches)) => {
             actions::init_action::InitAction {}.execute(package_service)?;
+        }
+        ("info", Some(info_matches)) => {
+            let name = info_matches
+                .value_of("PACKAGE")
+                .expect("unable to read package name");
+            actions::info_action::InfoAction {
+                package_name: String::from(name),
+            }
+            .execute(package_service)?;
         }
         ("install", Some(install_matches)) => {
             let package_source = install_matches

@@ -74,6 +74,13 @@ impl InstalledPackage {
 
         Ok(true)
     }
+
+    pub fn describe(self) -> Result<String> {
+        let manifest_path = self.local_path.join("hermione.yml");
+        let manifest = Manifest::new_from_path(manifest_path)?;
+
+        Ok(format!("{:#?}", manifest))
+    }
 }
 
 #[cfg(test)]
