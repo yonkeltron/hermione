@@ -1,5 +1,5 @@
 use assert_cmd::Command;
-use predicates::prelude::*;
+use predicates;
 
 #[test]
 fn smoke_test_naked_invocation() {
