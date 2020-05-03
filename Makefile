@@ -12,9 +12,6 @@ endif
 
 PUBLIC_PATH = public
 
-check:
-> cargo clippy
-
 ready:
 > gem install asciidoctor rouge
 
