@@ -11,4 +11,4 @@ COPY tests tests
 COPY example-package example-package
 COPY Makefile.toml Makefile.toml
 
-RUN cargo build
+RUN cargo make test
