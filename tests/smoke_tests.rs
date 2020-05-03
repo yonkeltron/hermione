@@ -38,7 +38,7 @@ fn smoke_test_list_invocation() {
         .assert()
         .append_context("main", "list")
         .success()
-        .stdout(predicates::str::contains("Displaying"));
+        .stdout(predicates::str::contains("Displaying: 0"));
 
     assert!(temp_dir_path.join("herm").is_dir());
 }
@@ -65,8 +65,10 @@ fn smoke_test_init_invocation() {
 fn smoke_test_install_example_package() {
     let temp_dir = TempDir::new().expect("unable to create temp dir in smoke test");
     let temp_dir_path = temp_dir.path();
-    let example_package_path = temp_dir_path.join("herm").join("example-package");
-    assert!(!example_package_path.is_dir());
+    temp_dir
+        .child("herm")
+        .child("example-package")
+        .assert(predicate::path::missing());
 
     let test_home_dir = TempDir::new().expect("unable to create temp home dir in smoke test");
 
@@ -79,7 +81,10 @@ fn smoke_test_install_example_package() {
         .append_context("main", "install example-package")
         .success();
 
-    assert!(example_package_path.is_dir());
+    temp_dir
+        .child("herm")
+        .child("example-package")
+        .assert(predicate::path::is_dir());
 
     test_home_dir
         .child("bamboo.txt")
