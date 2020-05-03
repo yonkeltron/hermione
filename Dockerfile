@@ -7,6 +7,7 @@ RUN cargo fetch
 RUN cargo install cargo-make
 
 COPY src src
+RUN cargo build
 COPY tests tests
 COPY example-package example-package
 COPY Makefile.toml Makefile.toml

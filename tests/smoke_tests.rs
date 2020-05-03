@@ -1,6 +1,8 @@
 use assert_cmd::Command;
+use assert_fs::prelude::*;
 use assert_fs::TempDir;
 use predicates;
+use predicates::prelude::*;
 
 use std::fs;
 use std::path::Path;
@@ -27,9 +29,12 @@ fn smoke_test_list_invocation() {
 
     assert!(!temp_dir_path.join("herm").is_dir());
 
+    let test_home_dir = TempDir::new().expect("unable to create temp home dir in smoke test");
+
     let mut cmd = Command::cargo_bin("herm").unwrap();
     cmd.arg("list")
         .env("XDG_DATA_HOME", &temp_dir_path)
+        .env("HOME", &test_home_dir.path())
         .assert()
         .append_context("main", "list")
         .success()
@@ -63,15 +68,20 @@ fn smoke_test_install_example_package() {
     let example_package_path = temp_dir_path.join("herm").join("example-package");
     assert!(!example_package_path.is_dir());
 
+    let test_home_dir = TempDir::new().expect("unable to create temp home dir in smoke test");
+
     let mut cmd = Command::cargo_bin("herm").unwrap();
     cmd.arg("install")
         .arg("example-package")
         .env("XDG_DATA_HOME", &temp_dir_path)
+        .env("HOME", &test_home_dir.path())
         .assert()
         .append_context("main", "install example-package")
         .success();
 
     assert!(example_package_path.is_dir());
 
-    assert!(Path::new("~/bamboo.txt").is_file());
+    test_home_dir
+        .child("bamboo.txt")
+        .assert(predicate::path::exists());
 }

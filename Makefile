@@ -12,9 +12,6 @@ endif
 
 PUBLIC_PATH = public
 
-test:
-> cargo test -- --test-threads=1
-
 check:
 > cargo clippy
 
