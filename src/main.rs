@@ -192,7 +192,7 @@ fn main() -> Result<()> {
                 package_service.logger,
                 "Unknown subcommand '{}'", subcommand
             );
-            Err(anyhow!("Unknown subcommand. Try 'help'"))?;
+            return Err(anyhow!("Unknown subcommand. Try 'help'"));
         }
     };
 
