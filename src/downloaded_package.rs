@@ -91,7 +91,7 @@ impl DownloadedPackage {
             "package" => self.package_name.clone());
 
             match manifest.hooks {
-                Some(hooks) => hooks.execute_post_install()?,
+                Some(hooks) => hooks.execute_post_install(&self.package_service.logger)?,
                 None => debug!(self.package_service.logger, "No post_install hook"),
             };
 
