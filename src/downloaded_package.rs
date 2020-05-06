@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use fs_extra::dir;
-use slog::{error, info};
+use slog::{debug, error, info};
 
 use std::fs;
 use std::path::PathBuf;
@@ -89,6 +89,11 @@ impl DownloadedPackage {
             info!(self.package_service.logger, "Successfully installed"; 
             "path" => install_path.display(),
             "package" => self.package_name.clone());
+
+            match manifest.hooks {
+                Some(hooks) => hooks.execute_post_install()?,
+                None => debug!(self.package_service.logger, "No post_install hook"),
+            };
 
             Ok(InstalledPackage {
                 local_path: install_path,

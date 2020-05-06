@@ -31,6 +31,7 @@ slog-async = "2.4.0"
 slog-term = "2.5.0"
 slog-json = "2.3.0"
 duckscript = "0.3.1"
+duckscriptsdk = "0.3.3"
 
 [dev-dependencies]
 quickcheck = "0.9"

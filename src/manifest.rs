@@ -5,7 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use crate::file_mapping_definition::FileMappingDefinition;
-use crate::hook::Hooks;
+use crate::hooks::Hooks;
 
 /// Manifest represents the definition of your Hermione package.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
