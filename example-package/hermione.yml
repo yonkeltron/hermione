@@ -9,3 +9,6 @@ mappings:
     platform: windows
   - i: b.txt
     o: "{{HOME}}/bamboo.txt"
+hooks:
+  post_install: |
+   echo Hello from post_install hook

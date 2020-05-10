@@ -8,6 +8,7 @@ mod downloaded_package;
 mod file_mapping;
 mod file_mapping_definition;
 mod git_downloader;
+mod hooks;
 mod installed_package;
 mod logger;
 mod manifest;

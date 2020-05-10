@@ -5,6 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use crate::file_mapping_definition::FileMappingDefinition;
+use crate::hooks::Hooks;
 
 /// Manifest represents the definition of your Hermione package.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -21,6 +22,8 @@ pub struct Manifest {
     /// Here is where you define the `what` and the `where`
     /// . The what being the file you want to move and the where being where do you want to move it.
     pub mappings: Vec<FileMappingDefinition>,
+
+    pub hooks: Option<Hooks>,
 }
 
 impl Manifest {
