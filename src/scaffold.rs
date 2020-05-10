@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 use git2::Config;
-use serde_yaml;
 use slog::{error, info, Logger};
 
 use std::collections::HashMap;

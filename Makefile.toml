@@ -27,3 +27,9 @@ script = [
     "chmod +x appimagetool-x86_64.AppImage",
     "./appimagetool-x86_64.AppImage AppDir"
 ]
+
+[tasks.test-in-docker]
+script = [
+    "docker build -t hermione:latest .",
+    "docker run --rm -it hermione:latest cargo make test"
+]

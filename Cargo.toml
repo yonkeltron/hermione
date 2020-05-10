@@ -1,6 +1,6 @@
 [package]
 name = "hermione"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Jonathan E. Magen <yonkeltron@gmail.com>", "Egli Hila <eggfoobar@gmail.com>"]
 edition = "2018"
 description = "Competent magic for your config files and more"
@@ -34,6 +34,9 @@ duckscript = "0.3.1"
 duckscriptsdk = "0.3.3"
 
 [dev-dependencies]
+assert_cmd = "1.0"
+assert_fs = "1.0"
+predicates = "1.0"
 quickcheck = "0.9"
 quickcheck_macros = "0.9"
-scopeguard = "1.0.0"
+scopeguard = "1.0"
