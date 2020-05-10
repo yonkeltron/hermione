@@ -90,3 +90,24 @@ fn smoke_test_install_example_package() {
         .child("bamboo.txt")
         .assert(predicate::path::exists());
 }
+
+#[test]
+fn smoke_test_post_install_hook() {
+    let temp_dir = TempDir::new().expect("unable to create temp dir in smoke test");
+    let temp_dir_path = temp_dir.path();
+    temp_dir
+        .child("herm")
+        .child("example-package")
+        .assert(predicate::path::missing());
+
+    let test_home_dir = TempDir::new().expect("unable to create temp home dir in smoke test");
+
+    let mut cmd = Command::cargo_bin("herm").unwrap();
+    cmd.arg("install")
+        .arg("example-package")
+        .env("XDG_DATA_HOME", &temp_dir_path)
+        .env("HOME", &test_home_dir.path())
+        .assert()
+        .append_context("main", "install example-package")
+        .stdout(predicate::str::contains("Hello from post_install hook"));
+}
