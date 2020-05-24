@@ -1,6 +1,6 @@
 [package]
 name = "hermione"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Jonathan E. Magen <yonkeltron@gmail.com>", "Egli Hila <eggfoobar@gmail.com>"]
 edition = "2018"
 description = "Competent magic for your config files and more"
@@ -30,6 +30,7 @@ slog = { version = "2.5.2", features = ["max_level_trace", "release_max_level_in
 slog-async = "2.4.0"
 slog-term = "2.5.0"
 slog-json = "2.3.0"
+openssl = { version = "0.10", features = ["vendored"] }
 
 [dev-dependencies]
 assert_cmd = "1.0"
