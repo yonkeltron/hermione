@@ -1,4 +1,4 @@
-FROM rust:1.43 AS build
+FROM rust:1.45 AS build
 
 COPY Cargo.lock Cargo.lock
 COPY Cargo.toml Cargo.toml
