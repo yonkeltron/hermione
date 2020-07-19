@@ -24,8 +24,6 @@ impl InstalledPackage {
     /// Removes a given package.
     /// First we try to remove all the files it installed in the
     /// manifest before we remove the package directory itself.
-    ///
-    /// Returns bool as a Result.
     pub fn uninstall(&self) -> Result<DownloadedPackage> {
         let manifest_path = self.local_path.join("hermione.yml");
         info!(
@@ -66,11 +64,23 @@ impl InstalledPackage {
 
     /// Removed the package directory it self after the files of this
     /// package have been successfully uninstalled.
-    ///
-    /// Returns bool as a Result.
     pub fn remove(self) -> Result<bool> {
+        let manifest_path = self.local_path.join("hermione.yml");
+        let manifest = Manifest::new_from_path(manifest_path)?;
+
         let downloaded_package = self.uninstall()?;
+
+        match &manifest.hooks {
+            Some(hooks) => hooks.execute_pre_remove(&self.package_service.logger)?,
+            None => debug!(self.package_service.logger, "No pre_remove hook"),
+        };
+
         downloaded_package.remove()?;
+
+        match manifest.hooks {
+            Some(hooks) => hooks.execute_post_remove(&self.package_service.logger)?,
+            None => debug!(self.package_service.logger, "No post_remove hook"),
+        };
 
         Ok(true)
     }

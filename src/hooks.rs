@@ -9,8 +9,6 @@ pub struct Hooks {
     pub post_install: Option<String>,
     pub pre_remove: Option<String>,
     pub post_remove: Option<String>,
-    pub pre_upgrade: Option<String>,
-    pub post_upgrade: Option<String>,
 }
 
 impl Hooks {
@@ -19,13 +17,6 @@ impl Hooks {
     }
     pub fn execute_post_install(&self, logger: &Logger) -> Result<()> {
         Hooks::execute("post_install", &self.post_install, logger)
-    }
-
-    pub fn execute_pre_upgrade(&self, logger: &Logger) -> Result<()> {
-        Hooks::execute("pre_upgrade", &self.pre_install, logger)
-    }
-    pub fn execute_post_upgrade(&self, logger: &Logger) -> Result<()> {
-        Hooks::execute("post_upgrade", &self.post_install, logger)
     }
 
     pub fn execute_pre_remove(&self, logger: &Logger) -> Result<()> {

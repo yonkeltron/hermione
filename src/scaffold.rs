@@ -63,8 +63,6 @@ impl Scaffold {
                 hooks: Some(Hooks {
                     pre_install: Some(String::from("echo Hello from pre-install hook")),
                     post_install: Some(String::from("echo Hello from post-install hook")),
-                    pre_upgrade: Some(String::from("echo Hello from pre-upgrade hook")),
-                    post_upgrade: Some(String::from("echo Hello from post-upgrade hook")),
                     pre_remove: Some(String::from("echo Hello from pre-remove hook")),
                     post_remove: Some(String::from("echo Hello from post-remove hook")),
                 }),
