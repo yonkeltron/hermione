@@ -20,10 +20,10 @@ impl Hooks {
     }
 
     pub fn execute_pre_remove(&self, logger: &Logger) -> Result<()> {
-        Hooks::execute("pre_remove", &self.pre_install, logger)
+        Hooks::execute("pre_remove", &self.pre_remove, logger)
     }
     pub fn execute_post_remove(&self, logger: &Logger) -> Result<()> {
-        Hooks::execute("post_remove", &self.post_install, logger)
+        Hooks::execute("post_remove", &self.post_remove, logger)
     }
 
     pub fn execute(hook_name: &str, script_string: &Option<String>, logger: &Logger) -> Result<()> {

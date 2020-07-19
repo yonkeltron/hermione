@@ -11,4 +11,10 @@ mappings:
     o: "{{HOME}}/bamboo.txt"
 hooks:
   post_install: |
-   echo Hello from post_install hook
+    echo Hello from post_install hook
+  pre_install: |
+    echo Hello from pre_install hook
+  pre_remove: |
+    echo Hello from pre_remove hook
+  post_remove: |
+    echo Hello from post_remove hook
