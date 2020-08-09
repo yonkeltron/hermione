@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use fs_extra::dir;
-use slog::{error, info};
+use slog::{debug, error, info};
 
 use std::fs;
 use std::path::PathBuf;
@@ -83,12 +83,22 @@ impl DownloadedPackage {
             dir::copy(&self.local_path, &dest_path, &copy_options)?;
             let install_path = dest_path.join(&self.package_name);
 
+            match &manifest.hooks {
+                Some(hooks) => hooks.execute_pre_install(&self.package_service.logger)?,
+                None => debug!(self.package_service.logger, "No pre_install hook"),
+            };
+
             for valid_mapping in validated_mappings {
                 info!(self.package_service.logger, "{}", valid_mapping.install()?);
             }
             info!(self.package_service.logger, "Successfully installed"; 
             "path" => install_path.display(),
             "package" => self.package_name.clone());
+
+            match manifest.hooks {
+                Some(hooks) => hooks.execute_post_install(&self.package_service.logger)?,
+                None => debug!(self.package_service.logger, "No post_install hook"),
+            };
 
             Ok(InstalledPackage {
                 local_path: install_path,
