@@ -2,7 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use directories::{BaseDirs, ProjectDirs};
 use fs_extra::dir;
 use lockfile::Lockfile;
-use slog::{debug, error, info, Logger};
+use slog::{error, info, Logger};
 
 use std::fs;
 use std::io::Write;
@@ -216,30 +216,28 @@ impl PackageService {
     pub fn download(self, src: String) -> Result<DownloadedPackage> {
         let package_name = Self::source_to_package_name(&src);
         let checkout_path = self.download_dir();
-
+        let mut logger = paris::Logger::new();
         if !checkout_path.exists() {
-            info!(
-                self.logger,
-                "Creating download directory";
-                "path" => &checkout_path.display(),
-            );
+            logger.info(format!(
+                "Creating download directory at {}",
+                &checkout_path.display()
+            ));
             dir::create_all(&checkout_path, false)?;
         }
 
         if src.ends_with("git") {
-            debug!(self.logger, "Detected remote package"; "source" => &src);
+            logger.info("Detected remote package");
             let clone_path = checkout_path.join(&package_name);
             let git_downloader = GitDownloader::new(clone_path, package_name, self);
             git_downloader.download_or_update(src)
         } else {
             let path = Path::new(&src).canonicalize()?;
             if path.is_dir() {
-                info!(
-                    self.logger,
-                    "Copying Package";
-                    "to_path" => checkout_path.display(),
-                    "from_path" => path.display(),
-                );
+                logger.info(format!(
+                    "Copying Package {} -> {}",
+                    checkout_path.display(),
+                    path.display(),
+                ));
                 let mut options = dir::CopyOptions::new();
                 options.copy_inside = true;
                 options.overwrite = true;

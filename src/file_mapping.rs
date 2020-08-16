@@ -37,7 +37,7 @@ impl FileMapping {
     /// Returns String print out of File Mapping.
     pub fn display_line(&self) -> String {
         format!(
-            "Linking {} -> {}",
+            "<blue>Linking</> {} <blue>-></> {}",
             self.i.to_string_lossy(),
             self.o.to_string_lossy(),
         )
@@ -46,7 +46,7 @@ impl FileMapping {
     /// Returns an error if the output file already exists.
     pub fn pre_install_check(&self) -> Result<String> {
         if !self.o.exists() {
-            Ok(format!("{} is valid", self.o.display()))
+            Ok(format!("{} is <green>valid</>", self.o.display()))
         } else {
             Err(anyhow!(
                 "Install to ({}) is NOT valid! File already exists, Hermione will not overwrite.",

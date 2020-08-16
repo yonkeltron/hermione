@@ -1,5 +1,5 @@
 use anyhow::Result;
-use slog::info;
+use paris::Logger;
 
 use crate::action::Action;
 use crate::package_service::PackageService;
@@ -11,12 +11,13 @@ pub struct InstallAction {
 
 impl Action for InstallAction {
     fn execute(self, package_service: PackageService) -> Result<()> {
-        info!(package_service.logger, "Initialized"; "package" => self.package_source.clone());
-        info!(
-            package_service.logger,
-            "Downloading and installing"; "source" => &self.package_source,
-        );
+        let mut logger = Logger::new();
+        logger.info("Initialized").info(format!(
+            "Downloading and installing from {}",
+            &self.package_source
+        ));
         package_service.download_and_install(self.package_source)?;
+        logger.success("Done.");
         Ok(())
     }
 }

@@ -8,8 +8,6 @@ Competent magic for your config files and more
 Proudly written in Rust, Hermione is a package manager for your config files.
 
 https://crates.io/crates/hermione/[image:https://img.shields.io/crates/v/hermione.svg[]]
-https://docs.rs/hermione[image:https://docs.rs/hermione/badge.svg[]]
-
 
 WARNING: This is *highly* experimental software and while we've done everything we can to ensure that it won't eat your stuff alive, please don't use it to manage anything critical right now.
 
@@ -33,7 +31,7 @@ Currently only available via Cargo, the Rust build tool and package manager.
 $ cargo install -f hermione
 ....
 
-How else would you like to install it? Homebrew on macOS? A Debian package? Just let us know!
+How else would you like to install it? Homebrew on macOS? A Debian package? Nix? Just let us know!
 
 == Getting started
 
