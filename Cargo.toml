@@ -27,10 +27,6 @@ serde_yaml = "0.8.11"
 tera = "1.0.2"
 directories = "2.0.2"
 paris = "1.5"
-slog = { version = "2.5.2", features = ["max_level_trace", "release_max_level_info"] }
-slog-async = "2.4.0"
-slog-term = "2.5.0"
-slog-json = "2.3.0"
 duckscript = "0.3.1"
 duckscriptsdk = "0.3.3"
 openssl = { version = "0.10", features = ["vendored"] }
