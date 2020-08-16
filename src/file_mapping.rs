@@ -101,7 +101,7 @@ impl FileMapping {
     pub fn uninstall(self) -> Result<String> {
         if self.o.is_file() {
             fs::remove_file(&self.o)?;
-            Ok(format!("Removed {}", self.o.display()))
+            Ok(format!("<yellow>Unlinked</> {}", self.o.display()))
         } else {
             Ok(format!(
                 "Not removing {} because it is not a file",

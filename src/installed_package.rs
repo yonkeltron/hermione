@@ -1,5 +1,5 @@
 use anyhow::Result;
-use slog::{debug, info};
+use paris::Logger;
 
 use std::fs;
 use std::path::PathBuf;
@@ -26,32 +26,28 @@ impl InstalledPackage {
     /// manifest before we remove the package directory itself.
     pub fn uninstall(&self) -> Result<DownloadedPackage> {
         let manifest_path = self.local_path.join("hermione.yml");
-        info!(
-            self.package_service.logger,
-            "Unlinking files defined in Manifest file";
-            "path" => manifest_path.display(),
-        );
+        let mut logger = Logger::new();
+        logger.info(format!(
+            "Unlinking files defined in Manifest file: {}",
+            manifest_path.display(),
+        ));
 
         let manifest = Manifest::new_from_path(manifest_path)?;
-        debug!(self.package_service.logger, "{:#?}", &manifest);
 
         for mapping_definition in manifest.mappings {
             if mapping_definition.valid_platform_family() {
                 let mapping = mapping_definition
                     .render_file_mapping(&self.package_service, self.local_path.clone())?;
-                info!(self.package_service.logger, "{}", mapping.uninstall()?);
+                logger.indent(1).log(mapping.uninstall()?);
             }
         }
-        info!(
-            self.package_service.logger,
-            "Successfully unlinked files"; "package" => self.package_name.clone(),
-        );
+        logger.success("Successfully unlinked files");
 
         fs::remove_dir_all(&self.local_path)?;
-        info!(
-            self.package_service.logger,
-            "Successfully removed installed package"; "package" => self.package_name.clone(),
-        );
+        logger.success(format!(
+            "Successfully removed installed package {}",
+            self.package_name.clone(),
+        ));
 
         let downloaded_path_buf = self.package_service.download_dir().join(&self.package_name);
 
