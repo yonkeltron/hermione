@@ -65,17 +65,21 @@ impl InstalledPackage {
         let manifest = Manifest::new_from_path(manifest_path)?;
 
         let downloaded_package = self.uninstall()?;
-
+        let mut logger = Logger::new();
         match &manifest.hooks {
             Some(hooks) => hooks.execute_pre_remove(&self.package_service.logger)?,
-            None => debug!(self.package_service.logger, "No pre_remove hook"),
+            None => {
+                logger.log("No pre_remove hook");
+            }
         };
 
         downloaded_package.remove()?;
 
         match manifest.hooks {
             Some(hooks) => hooks.execute_post_remove(&self.package_service.logger)?,
-            None => debug!(self.package_service.logger, "No post_remove hook"),
+            None => {
+                logger.log("No post_remove hook");
+            }
         };
 
         Ok(true)
