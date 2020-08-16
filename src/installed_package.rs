@@ -67,7 +67,7 @@ impl InstalledPackage {
         let downloaded_package = self.uninstall()?;
         let mut logger = Logger::new();
         match &manifest.hooks {
-            Some(hooks) => hooks.execute_pre_remove(&self.package_service.logger)?,
+            Some(hooks) => hooks.execute_pre_remove()?,
             None => {
                 logger.log("No pre_remove hook");
             }
@@ -76,7 +76,7 @@ impl InstalledPackage {
         downloaded_package.remove()?;
 
         match manifest.hooks {
-            Some(hooks) => hooks.execute_post_remove(&self.package_service.logger)?,
+            Some(hooks) => hooks.execute_post_remove()?,
             None => {
                 logger.log("No post_remove hook");
             }
@@ -90,12 +90,11 @@ impl InstalledPackage {
 mod tests {
     use super::*;
 
-    use crate::logger::create_testing_logger;
     use scopeguard::defer;
 
     fn purge() {
-        let package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
         package_service
             .implode()
             .expect("Failed to clean up in test");
@@ -105,14 +104,14 @@ mod tests {
     fn test_from_package_name_with_real_name() {
         defer!(purge());
         let name = String::from("example-package");
-        let package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
         let installed_package = package_service
             .download_and_install("./example-package".to_string())
             .expect("Failed to install package");
 
-        let test_package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let test_package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
 
         assert!(test_package_service.get_installed_package(name).is_ok());
         installed_package.remove().expect("Failed to clean up dir");

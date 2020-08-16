@@ -1,5 +1,5 @@
 use anyhow::Result;
-use slog::info;
+use paris::Logger;
 
 use crate::action::Action;
 use crate::package_service::PackageService;
@@ -12,9 +12,10 @@ pub struct NewAction {
 }
 
 impl Action for NewAction {
-    fn execute(self, package_service: PackageService) -> Result<()> {
-        info!(package_service.logger, "Initialized");
+    fn execute(self, _package_service: PackageService) -> Result<()> {
+        let mut logger = Logger::new();
+        logger.info("Initialized");
         let scaffold = Scaffold::new(&self.package_name, &self.package_id);
-        scaffold.create_package(&package_service.logger)
+        scaffold.create_package()
     }
 }

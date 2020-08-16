@@ -124,6 +124,6 @@ mod tests {
         };
         let display_line = file_mapping.display_line();
 
-        display_line.contains(&a) && display_line.contains(&b) && display_line.contains(" -> ")
+        display_line.contains(&a) && display_line.contains(&b) && display_line.contains("->")
     }
 }

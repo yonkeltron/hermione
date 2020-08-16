@@ -1,5 +1,5 @@
 use anyhow::Result;
-use slog::info;
+use paris::Logger;
 
 use crate::action::Action;
 use crate::package_service::PackageService;
@@ -11,11 +11,9 @@ pub struct UpgradeAction {
 
 impl Action for UpgradeAction {
     fn execute(self, package_service: PackageService) -> Result<()> {
+        let mut logger = Logger::new();
         let packages_to_upgrade = if self.package_names.is_empty() {
-            info!(
-                package_service.logger,
-                "No packages given, defaulting to all of them"
-            );
+            logger.info("No packages given, defaulting to all of them");
             package_service.list_installed_packages()?
         } else {
             self.package_names

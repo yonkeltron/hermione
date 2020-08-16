@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use slog::{error, info};
+use paris::Logger;
 
 use crate::action::Action;
 use crate::package_service::PackageService;
@@ -12,19 +12,14 @@ pub struct ImplodeAction {
 
 impl Action for ImplodeAction {
     fn execute(self, package_service: PackageService) -> Result<()> {
-        info!(package_service.logger, "Initialized");
+        let mut logger = Logger::new();
+        logger.info("Initialized");
         if self.yes_i_am_sure {
             package_service.implode()?;
-            info!(
-                package_service.logger,
-                "Successfully removed everything Hermione"
-            );
+            logger.success("Successfully removed everything Hermione");
             Ok(())
         } else {
-            error!(
-                package_service.logger,
-                "I am not sure you want me to do this."
-            );
+            logger.error("I am not sure you want me to do this.");
             Err(anyhow!("Please pass confirm flag if you are sure"))
         }
     }

@@ -2,7 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use directories::{BaseDirs, ProjectDirs};
 use fs_extra::dir;
 use lockfile::Lockfile;
-use slog::{error, info, Logger};
+use paris::Logger;
 
 use std::fs;
 use std::io::Write;
@@ -29,7 +29,6 @@ const APPLICATION: &str = "herm";
 #[derive(Clone, Debug)]
 pub struct PackageService {
     pub project_dirs: ProjectDirs,
-    pub logger: Logger,
 }
 
 impl PackageService {
@@ -40,10 +39,9 @@ impl PackageService {
     /// * logger - Instance of Logger.
     ///
     /// Returns an instance of PackageService as a Result.
-    pub fn new(logger: Logger) -> Result<Self> {
+    pub fn new() -> Result<Self> {
         Ok(PackageService {
             project_dirs: Self::project_dirs()?,
-            logger,
         })
     }
 
@@ -51,13 +49,10 @@ impl PackageService {
     ///
     /// Returns a bool as a Result.
     pub fn init(&self) -> Result<bool> {
+        let mut logger = Logger::new();
         let d_dir = self.download_dir();
         if !d_dir.is_dir() {
-            info!(
-                self.logger,
-                "Creating download directory";
-                "path" => &d_dir.display(),
-            );
+            logger.info(format!("Creating download directory {}", &d_dir.display()));
             fs::create_dir_all(&d_dir).with_context(|| {
                 format!("Unable to create download directory {}", d_dir.display())
             })?;
@@ -65,11 +60,7 @@ impl PackageService {
 
         let i_dir = self.install_dir();
         if !i_dir.is_dir() {
-            info!(
-                self.logger,
-                "Creating install directory";
-                "path" => &i_dir.display(),
-            );
+            logger.info(format!("Creating install directory: {}", &i_dir.display(),));
             fs::create_dir_all(&i_dir).with_context(|| {
                 format!("Unable to create install directory {}", i_dir.display())
             })?;
@@ -278,15 +269,16 @@ impl PackageService {
     ///
     /// Returns an empty Result.
     pub fn purge_installed_packages(&self) -> Result<()> {
-        info!(self.logger, "Started removing all installed packages");
+        let mut logger = Logger::new();
+        logger.info("Started removing all installed packages");
         let errored_uninstalled = self
             .list_installed_packages()?
             .into_iter()
             .map(|installed_package| {
-                info!(
-                    self.logger,
-                    "Removing"; "package" => installed_package.package_name.clone(),
-                );
+                logger.info(format!(
+                    "Removing package: {}",
+                    installed_package.package_name.clone()
+                ));
                 installed_package.remove().unwrap_or(false)
             })
             .filter(|was_removed| !was_removed)
@@ -303,30 +295,29 @@ impl PackageService {
     ///
     /// Returns an empty Result.
     pub fn implode(&self) -> Result<()> {
+        let mut logger = paris::Logger::new();
         match self.purge_installed_packages() {
             Ok(_) => {
-                info!(self.logger, "All packages have been uninstalled.");
-                info!(
-                    self.logger,
-                    "Removing install directory";
-                    "path" => self.install_dir().display(),
-                );
+                logger.info("All packages have been uninstalled.");
+                logger.info(format!(
+                    "Removing install directory: {}",
+                    self.install_dir().display(),
+                ));
                 if self.install_dir().exists() {
                     fs::remove_dir_all(self.install_dir())?
                 }
             }
             Err(e) => {
-                error!(self.logger, "Error deleting installed packages and installed directory";
-                    "error" => e.to_string(),
-                    "path" => self.install_dir().display(),
-                );
+                logger.error(format!(
+                    "Error deleting installed packages and installed directory because {}",
+                    e.to_string(),
+                ));
             }
         }
-        info!(
-            self.logger,
-            "Removing download directory";
-            "path" => self.download_dir().display()
-        );
+        logger.info(format!(
+            "Removing download directory: {}",
+            self.download_dir().display()
+        ));
         if self.download_dir().exists() {
             fs::remove_dir_all(self.download_dir())?;
         }
@@ -343,11 +334,9 @@ mod tests {
 
     use std::fs;
 
-    use crate::logger::create_testing_logger;
-
     fn purge() {
-        let package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
         package_service
             .implode()
             .expect("Failed to clean up in test");
@@ -356,8 +345,8 @@ mod tests {
     #[test]
     fn test_list_installed_packages_with_nothing() {
         defer!(purge());
-        let package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
         let installed_package_list = package_service
             .list_installed_packages()
             .expect("Can not get list of installed packages in test");
@@ -369,14 +358,14 @@ mod tests {
         defer!(purge());
 
         let src = String::from("./example-package");
-        let package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
         package_service
             .download_and_install(src)
             .expect("Unable to instantiate package in test");
 
-        let test_package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let test_package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
         let installed_package_list = test_package_service
             .list_installed_packages()
             .expect("Can not get list of installed packages in test");
@@ -404,8 +393,8 @@ mod tests {
         defer!(purge());
 
         let src = String::from("./example-package");
-        let package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
         let package = package_service
             .download(src)
             .expect("Unable to instantiate package in test");
@@ -418,15 +407,15 @@ mod tests {
         defer!(purge());
 
         let src = String::from("./example-package");
-        let package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
 
         package_service
             .download_and_install(src)
             .expect("Unable to instantiate package in test");
 
-        let test_package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let test_package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
 
         let installed_path = test_package_service
             .installed_package_path("example-package")
@@ -440,15 +429,15 @@ mod tests {
 
         let package_name = "example-package";
 
-        let package_service: PackageService = PackageService::new(create_testing_logger())
-            .expect("Could not create package service in test");
+        let package_service: PackageService =
+            PackageService::new().expect("Could not create package service in test");
 
         package_service
             .download_and_install("./example-package".to_string())
             .expect("Failed to install package in test");
 
-        let test_package_service = PackageService::new(create_testing_logger())
-            .expect("Unable to instantiate PackageService in test");
+        let test_package_service =
+            PackageService::new().expect("Unable to instantiate PackageService in test");
 
         let actual = test_package_service
             .installed_package_path(package_name)
@@ -460,8 +449,8 @@ mod tests {
 
     #[quickcheck]
     fn from_package_name_with_bogus_package_always_fails(name: String) -> bool {
-        let package_service: PackageService = PackageService::new(create_testing_logger())
-            .expect("Could not create package service in test");
+        let package_service: PackageService =
+            PackageService::new().expect("Could not create package service in test");
         package_service.get_installed_package(name).is_err()
     }
 }

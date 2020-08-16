@@ -38,7 +38,7 @@ fn smoke_test_list_invocation() {
         .assert()
         .append_context("main", "list")
         .success()
-        .stdout(predicates::str::contains("Displaying: 0"));
+        .stdout(predicates::str::contains("Displayed: 0"));
 
     assert!(temp_dir_path.join("herm").is_dir());
 }

@@ -76,7 +76,7 @@ impl DownloadedPackage {
             let install_path = dest_path.join(&self.package_name);
 
             match &manifest.hooks {
-                Some(hooks) => hooks.execute_pre_install(&self.package_service.logger)?,
+                Some(hooks) => hooks.execute_pre_install()?,
                 None => {
                     logger.log("No pre_install hook");
                 }
@@ -91,7 +91,7 @@ impl DownloadedPackage {
             ));
 
             match manifest.hooks {
-                Some(hooks) => hooks.execute_post_install(&self.package_service.logger)?,
+                Some(hooks) => hooks.execute_post_install()?,
                 None => {
                     logger.log("No post_install hook");
                 }
