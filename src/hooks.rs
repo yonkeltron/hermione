@@ -31,13 +31,15 @@ impl Hooks {
             Some(f) => {
                 let mut logger = Logger::new();
                 logger.info(format!("Initiated {} hook", hook_name));
-                logger.info("Loading Duckscript sdk into context");
+                logger
+                    .info("Loading Duckscript sdk into context")
+                    .newline(1);
 
                 let mut context = types::runtime::Context::new();
                 match duckscriptsdk::load(&mut context.commands) {
                     Ok(_) => match runner::run_script(f.as_str(), context) {
                         Ok(_) => {
-                            logger.success("Finished running Duckscript");
+                            logger.newline(1).success("Finished running Duckscript");
                             Ok(())
                         }
                         Err(e) => Err(anyhow!(
