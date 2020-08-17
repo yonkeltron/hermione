@@ -287,7 +287,7 @@ impl PackageService {
         if errored_uninstalled.is_empty() {
             Ok(())
         } else {
-            Err(anyhow!("Failed to uninstall all packges"))
+            Err(anyhow!("Failed to uninstall all packages"))
         }
     }
 
