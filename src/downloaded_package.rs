@@ -85,10 +85,7 @@ impl DownloadedPackage {
             for valid_mapping in validated_mappings {
                 logger.indent(1).log(valid_mapping.install()?);
             }
-            logger.success(format!(
-                "Successfully installed {}",
-                self.package_name.clone()
-            ));
+            logger.success(format!("Successfully installed {}", self.package_name));
 
             match manifest.hooks {
                 Some(hooks) => hooks.execute_post_install()?,
@@ -116,7 +113,7 @@ impl DownloadedPackage {
     /// Returns a Result of InstalledPackage
     pub fn upgrade(self) -> Result<InstalledPackage> {
         let mut logger = Logger::new();
-        logger.loading(format!("Started upgrading {}", self.package_name.clone()));
+        logger.loading(format!("Started upgrading {}", self.package_name));
 
         let git_downloader = GitDownloader::new(
             self.local_path.clone(),
