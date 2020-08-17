@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use duckscript::{runner, types};
+use paris::Logger;
 use serde::{Deserialize, Serialize};
-use slog::{info, o, Logger};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Hooks {
@@ -12,32 +12,34 @@ pub struct Hooks {
 }
 
 impl Hooks {
-    pub fn execute_pre_install(&self, logger: &Logger) -> Result<()> {
-        Hooks::execute("pre_install", &self.pre_install, logger)
+    pub fn execute_pre_install(&self) -> Result<()> {
+        Hooks::execute("pre_install", &self.pre_install)
     }
-    pub fn execute_post_install(&self, logger: &Logger) -> Result<()> {
-        Hooks::execute("post_install", &self.post_install, logger)
-    }
-
-    pub fn execute_pre_remove(&self, logger: &Logger) -> Result<()> {
-        Hooks::execute("pre_remove", &self.pre_remove, logger)
-    }
-    pub fn execute_post_remove(&self, logger: &Logger) -> Result<()> {
-        Hooks::execute("post_remove", &self.post_remove, logger)
+    pub fn execute_post_install(&self) -> Result<()> {
+        Hooks::execute("post_install", &self.post_install)
     }
 
-    pub fn execute(hook_name: &str, script_string: &Option<String>, logger: &Logger) -> Result<()> {
+    pub fn execute_pre_remove(&self) -> Result<()> {
+        Hooks::execute("pre_remove", &self.pre_remove)
+    }
+    pub fn execute_post_remove(&self) -> Result<()> {
+        Hooks::execute("post_remove", &self.post_remove)
+    }
+
+    pub fn execute(hook_name: &str, script_string: &Option<String>) -> Result<()> {
         match script_string {
             Some(f) => {
-                let hogger = logger.new(o!("hook" => String::from(hook_name)));
-                info!(hogger, "Initiated {} hook", hook_name);
-                info!(hogger, "Loading Duckscript sdk into context");
+                let mut logger = Logger::new();
+                logger.info(format!("Initiated {} hook", hook_name));
+                logger
+                    .info("Loading Duckscript sdk into context")
+                    .newline(1);
 
                 let mut context = types::runtime::Context::new();
                 match duckscriptsdk::load(&mut context.commands) {
                     Ok(_) => match runner::run_script(f.as_str(), context) {
                         Ok(_) => {
-                            info!(hogger, "Finished running Duckscript");
+                            logger.newline(1).success("Finished running Duckscript");
                             Ok(())
                         }
                         Err(e) => Err(anyhow!(

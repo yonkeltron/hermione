@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use clap::{App, Arg, SubCommand};
-use slog::{error, o, Level};
+use paris::Logger;
 
 mod action;
 mod actions;
@@ -10,13 +10,11 @@ mod file_mapping_definition;
 mod git_downloader;
 mod hooks;
 mod installed_package;
-mod logger;
 mod manifest;
 mod package_service;
 mod scaffold;
 
 use crate::action::Action;
-use crate::logger::create_logger;
 use crate::package_service::PackageService;
 
 fn main() -> Result<()> {
@@ -24,14 +22,6 @@ fn main() -> Result<()> {
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
-        .arg(
-            Arg::with_name("log_format")
-                .long("log-format")
-                .help("output log format")
-                .possible_values(&["human", "json", "prettyjson"])
-                .default_value("human")
-                .global(true),
-        )
         .subcommand(
             SubCommand::with_name("init")
                 .about("initialize Hermione manifest file")
@@ -116,12 +106,8 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    let format = matches
-        .value_of("log_format")
-        .expect("Unable to read log format");
     let subcommand_name = String::from(matches.subcommand_name().unwrap_or("error"));
-    let log = create_logger(format, Level::Info).new(o!("action" => subcommand_name.clone()));
-    let package_service = PackageService::new(log)?;
+    let package_service = PackageService::new()?;
 
     let lockfile = package_service.lockfile()?;
 
@@ -189,10 +175,8 @@ fn main() -> Result<()> {
             .execute(package_service)?;
         }
         (subcommand, _) => {
-            error!(
-                package_service.logger,
-                "Unknown subcommand '{}'", subcommand
-            );
+            let mut logger = Logger::new();
+            logger.error(format!("Unknown subcommand '{}'", subcommand));
             return Err(anyhow!("Unknown subcommand. Try 'help'"));
         }
     };

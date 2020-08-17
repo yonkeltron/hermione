@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use fs_extra::dir;
-use slog::{debug, error, info};
+use paris::Logger;
 
 use std::fs;
 use std::path::PathBuf;
@@ -51,9 +51,8 @@ impl DownloadedPackage {
                 .for_each(|error| eprintln!("{:?}", error));
             Err(anyhow!("Unable to install package"))
         } else {
-            info!(self.package_service.logger,
-                "Validating file mappings before install";
-                "package" => self.package_name.clone());
+            let mut logger = Logger::new();
+            logger.info("Running preflight check");
 
             let validated_mappings = self
                 .validate_mappings(mapping_render_results)
@@ -65,39 +64,34 @@ impl DownloadedPackage {
             copy_options.copy_inside = true;
             let dest_path = self.package_service.install_dir();
             if !dest_path.exists() {
-                info!(
-                    self.package_service.logger,
-                    "Creating install directory";
-                    "path" => &dest_path.display()
-                );
+                logger.loading(format!(
+                    "Creating install directory: {}",
+                    &dest_path.display()
+                ));
                 dir::create_all(&dest_path, false)?;
-                info!(
-                    self.package_service.logger,
-                    "Successfully created install directory"
-                );
+                logger.info("Successfully created install directory");
             }
-            info!(
-                self.package_service.logger,
-                "Installing"; "path" => &self.package_name,
-            );
+            logger.info("Installing");
             dir::copy(&self.local_path, &dest_path, &copy_options)?;
             let install_path = dest_path.join(&self.package_name);
 
             match &manifest.hooks {
-                Some(hooks) => hooks.execute_pre_install(&self.package_service.logger)?,
-                None => debug!(self.package_service.logger, "No pre_install hook"),
+                Some(hooks) => hooks.execute_pre_install()?,
+                None => {
+                    logger.log("No pre_install hook");
+                }
             };
-
+            logger.info("Linking files");
             for valid_mapping in validated_mappings {
-                info!(self.package_service.logger, "{}", valid_mapping.install()?);
+                logger.indent(1).log(valid_mapping.install()?);
             }
-            info!(self.package_service.logger, "Successfully installed"; 
-            "path" => install_path.display(),
-            "package" => self.package_name.clone());
+            logger.success(format!("Successfully installed {}", self.package_name));
 
             match manifest.hooks {
-                Some(hooks) => hooks.execute_post_install(&self.package_service.logger)?,
-                None => debug!(self.package_service.logger, "No post_install hook"),
+                Some(hooks) => hooks.execute_post_install()?,
+                None => {
+                    logger.log("No post_install hook");
+                }
             };
 
             Ok(InstalledPackage {
@@ -118,8 +112,8 @@ impl DownloadedPackage {
     ///
     /// Returns a Result of InstalledPackage
     pub fn upgrade(self) -> Result<InstalledPackage> {
-        info!(self.package_service.logger, "Started upgrade";
-        "package" => self.package_name.clone());
+        let mut logger = Logger::new();
+        logger.loading(format!("Started upgrading {}", self.package_name));
 
         let git_downloader = GitDownloader::new(
             self.local_path.clone(),
@@ -129,13 +123,14 @@ impl DownloadedPackage {
 
         match git_downloader.update() {
             Ok(_) => {
-                info!(self.package_service.logger, "Finished fetching latest";
-                "package" => self.package_name.clone());
+                logger.info("Finished fetching latest.");
                 self.install()
             }
             Err(e) => {
-                error!(self.package_service.logger, "Could not upgrade package, reverting back";
-                "package" => self.package_name.clone(), "error" => e.to_string());
+                logger
+                    .error("Could not upgrade package, reverting back")
+                    .indent(1)
+                    .log(format!("<red>{}</>", e.to_string()));
                 self.install()
             }
         }
@@ -150,16 +145,15 @@ impl DownloadedPackage {
     ///
     /// Returns a Vector of FileMapping as a Result.
     fn validate_mappings(&self, mappings: Vec<Result<FileMapping>>) -> Result<Vec<FileMapping>> {
+        let mut logger = Logger::new();
+        logger.info("Validating mappings");
         mappings
             .into_iter()
             .map(|mapping_result| {
                 let mapping = mapping_result?;
-                info!(
-                    self.package_service.logger,
-                    " ✓ {}",
-                    mapping.pre_install_check()?;
-                    "package" => self.package_name.clone(),
-                );
+                logger
+                    .indent(1)
+                    .log(format!("OK: {}", mapping.pre_install_check()?));
                 Ok(mapping)
             })
             .collect::<Result<Vec<_>>>()
