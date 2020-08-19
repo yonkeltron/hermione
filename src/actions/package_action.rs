@@ -35,7 +35,7 @@ impl Action for PackageAction {
             file_mapping_definition.set_integrity(package_path.to_path_buf())?;
             let file_path = package_path.join(&file_mapping_definition.i);
             builder.append_path(&file_path)?;
-            logger.indent(1).info(format!(
+            logger.indent(1).log(format!(
                 "Added <blue>{}</> to package archive",
                 file_mapping_definition.i
             ));
