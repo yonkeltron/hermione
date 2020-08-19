@@ -1,20 +1,19 @@
 ---
-name: "Example Package"
-author: "J. Random Hacker"
-description: "My awesome example package"
+name: Example Package
+author: J. Random Hacker
+description: My awesome example package
 id: org.hermione.example-package
 mappings:
   - i: a.txt
     o: "{{HOME}}/panda.txt"
     platform: windows
+    integrity: sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=
   - i: b.txt
     o: "{{HOME}}/bamboo.txt"
+    platform: ~
+    integrity: sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=
 hooks:
-  post_install: |
-    echo Hello from post_install hook
-  pre_install: |
-    echo Hello from pre_install hook
-  pre_remove: |
-    echo Hello from pre_remove hook
-  post_remove: |
-    echo Hello from post_remove hook
+  pre_install: "echo Hello from pre_install hook\n"
+  post_install: "echo Hello from post_install hook\n"
+  pre_remove: "echo Hello from pre_remove hook\n"
+  post_remove: "echo Hello from post_remove hook\n"

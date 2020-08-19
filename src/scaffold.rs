@@ -53,11 +53,13 @@ impl Scaffold {
                         String::from("sample.txt"),
                         String::from("{{HOME}}/sample.txt"),
                         None,
+                        None,
                     ),
                     FileMappingDefinition::new(
                         String::from("config.toml"),
                         String::from("/tmp/absolute/path/to/dir/config.toml"),
                         Some(String::from("unix")),
+                        None,
                     ),
                 ],
                 hooks: Some(Hooks {

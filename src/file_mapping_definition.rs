@@ -16,16 +16,16 @@ const PLATFORM: &str = "unix";
 const PLATFORM: &str = "windows";
 
 /// Mapping Definitions are where you put the input `i` files and the output `o` location
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct FileMappingDefinition {
     /// Input file path - Where is the desired file in the package.
-    i: String,
+    pub i: String,
     /// Output file path - Where you would like it to go on the system.
-    o: String,
+    pub o: String,
     /// Specifies file mapping to occur only when matching platform
-    platform: Option<String>,
+    pub platform: Option<String>,
     /// Subresource Integrity (SRI) according to https://w3c.github.io/webappsec-subresource-integrity/
-    integrity: Option<String>,
+    pub integrity: Option<String>,
 }
 
 impl FileMappingDefinition {
@@ -82,11 +82,11 @@ impl FileMappingDefinition {
     }
 
     pub fn verify_integrity(&self) -> Result<bool> {
-        match self.integrity {
+        match &self.integrity {
             Some(checksum) => {
                 let parsed: Integrity = checksum.parse()?;
-                let checker = IntegrityChecker::new(parsed);
-                let file_contents = fs::read(self.i)?;
+                let mut checker = IntegrityChecker::new(parsed);
+                let file_contents = fs::read(&self.i)?;
                 checker.input(&file_contents);
 
                 Ok(checker.result().is_ok())
@@ -95,13 +95,16 @@ impl FileMappingDefinition {
         }
     }
 
-    pub fn set_integrity(&mut self) -> Result<String> {
-        let file_contents = fs::read(self.i)?;
+    pub fn set_integrity(&mut self, package_path: PathBuf) -> Result<String> {
+        let file_path = package_path.join(&self.i);
+        let file_contents = fs::read(file_path)?;
 
         let sri = Integrity::from(&file_contents);
 
         self.integrity = Some(sri.to_string());
 
-        Ok(self.integrity.unwrap())
+        let integrity_string = sri.to_string();
+
+        Ok(integrity_string)
     }
 }

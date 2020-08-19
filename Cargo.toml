@@ -19,18 +19,20 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1.0"
 clap = "2.33"
+directories = "2.0.2"
+duckscript = "0.3.1"
+duckscriptsdk = "0.3.3"
+flate2 = { version = "1.0", features = ["zlib"], default-features = false }
 fs_extra = "1.1.0"
 git2 = "0.11"
 lockfile = "0.2.2"
+openssl = { version = "0.10", features = ["vendored"] }
+paris = "1.5"
 serde = { version = "1.0.104", features = ["derive"] }
 serde_yaml = "0.8.11"
 ssri = "5.0"
+tar = "0.4"
 tera = "1.0.2"
-directories = "2.0.2"
-paris = "1.5"
-duckscript = "0.3.1"
-duckscriptsdk = "0.3.3"
-openssl = { version = "0.10", features = ["vendored"] }
 
 [dev-dependencies]
 assert_cmd = "1.0"

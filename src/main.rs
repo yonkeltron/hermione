@@ -73,6 +73,22 @@ fn main() -> Result<()> {
                 ),
         )
         .subcommand(
+            SubCommand::with_name("package")
+                .about("creates a package archive")
+                .version(env!("CARGO_PKG_VERSION"))
+                .author(env!("CARGO_PKG_AUTHORS"))
+                .alias("pack")
+                .arg(
+                    Arg::with_name("path")
+                        .help("path to package")
+                        .required(true)
+                        .takes_value(true)
+                        .value_name("PACKAGE_PATH")
+                        .default_value(".")
+                        .index(1),
+                ),
+        )
+        .subcommand(
             SubCommand::with_name("new")
                 .about("generate new Hermione package")
                 .version(env!("CARGO_PKG_VERSION"))
@@ -158,6 +174,16 @@ fn main() -> Result<()> {
             actions::new_action::NewAction {
                 package_name: String::from(package_name),
                 package_id: String::from(package_id),
+            }
+            .execute(package_service)?;
+        }
+        ("package", Some(package_matches)) => {
+            let package_path = package_matches
+                .value_of("path")
+                .expect("no package path provided");
+
+            actions::package_action::PackageAction {
+                package_path: String::from(package_path),
             }
             .execute(package_service)?;
         }

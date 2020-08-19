@@ -8,7 +8,7 @@ use crate::file_mapping_definition::FileMappingDefinition;
 use crate::hooks::Hooks;
 
 /// Manifest represents the definition of your Hermione package.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Manifest {
     /// Name of your package 📦.
     pub name: String,

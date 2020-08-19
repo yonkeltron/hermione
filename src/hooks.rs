@@ -3,7 +3,7 @@ use duckscript::{runner, types};
 use paris::Logger;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Hooks {
     pub pre_install: Option<String>,
     pub post_install: Option<String>,
