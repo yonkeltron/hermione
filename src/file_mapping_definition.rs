@@ -1,7 +1,9 @@
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
+use ssri::{Integrity, IntegrityChecker};
 use tera::{Context, Tera};
 
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::file_mapping::FileMapping;
@@ -22,6 +24,8 @@ pub struct FileMappingDefinition {
     o: String,
     /// Specifies file mapping to occur only when matching platform
     platform: Option<String>,
+    /// Subresource Integrity (SRI) according to https://w3c.github.io/webappsec-subresource-integrity/
+    integrity: Option<String>,
 }
 
 impl FileMappingDefinition {
@@ -31,8 +35,13 @@ impl FileMappingDefinition {
     ///
     /// * `i` - `String` input file path.
     /// * `o` - `String` output file path.
-    pub fn new(i: String, o: String, platform: Option<String>) -> Self {
-        FileMappingDefinition { i, o, platform }
+    pub fn new(i: String, o: String, platform: Option<String>, integrity: Option<String>) -> Self {
+        FileMappingDefinition {
+            i,
+            o,
+            platform,
+            integrity,
+        }
     }
 
     /// Returns a FileMapping.
@@ -70,5 +79,29 @@ impl FileMappingDefinition {
             Some(platform) => platform == PLATFORM,
             None => true,
         }
+    }
+
+    pub fn verify_integrity(&self) -> Result<bool> {
+        match self.integrity {
+            Some(checksum) => {
+                let parsed: Integrity = checksum.parse()?;
+                let checker = IntegrityChecker::new(parsed);
+                let file_contents = fs::read(self.i)?;
+                checker.input(&file_contents);
+
+                Ok(checker.result().is_ok())
+            }
+            None => Ok(false),
+        }
+    }
+
+    pub fn set_integrity(&mut self) -> Result<String> {
+        let file_contents = fs::read(self.i)?;
+
+        let sri = Integrity::from(&file_contents);
+
+        self.integrity = Some(sri.to_string());
+
+        Ok(self.integrity.unwrap())
     }
 }
