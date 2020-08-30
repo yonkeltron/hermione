@@ -12,6 +12,7 @@ mod hooks;
 mod installed_package;
 mod manifest;
 mod package_service;
+mod packer;
 mod scaffold;
 
 use crate::action::Action;
