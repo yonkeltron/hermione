@@ -35,7 +35,7 @@ impl Packer {
         }
     }
 
-    fn get_manifest_path_buf(&self, package_path: PathBuf) -> Result<PathBuf> {
+    fn get_manifest_path_buf(&self, package_path: &PathBuf) -> Result<PathBuf> {
         let mut logger = Logger::new();
         logger.info("Validating manifest path");
 
@@ -52,7 +52,7 @@ impl Packer {
     pub fn pack(self) -> Result<String> {
         let mut logger = Logger::new();
         let package_path = self.get_package_path_buf()?;
-        let manifest_path = self.get_manifest_path_buf(package_path.to_path_buf())?;
+        let manifest_path = self.get_manifest_path_buf(&package_path)?;
 
         logger.loading("Loading package manifest");
         let manifest = Manifest::new_from_path(manifest_path.to_path_buf())?;
