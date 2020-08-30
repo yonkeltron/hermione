@@ -20,40 +20,39 @@ impl Packer {
         }
     }
 
-    pub fn pack(self) -> Result<String> {
+    fn get_package_path_buf(&self) -> Result<PathBuf> {
         let mut logger = Logger::new();
         logger.info("Validating package path");
         let package_path = Path::new(&self.package_string_path);
-        match package_path.metadata() {
-            Ok(stat) => {
-                if !stat.is_dir() {
-                    Err(anyhow!(
-                        "Package path ({}) is not a directory",
-                        package_path.display()
-                    ))
-                } else {
-                    logger.indent(1).log("Path ok");
-                    Ok(())
-                }
-            }
-            Err(e) => {
-                logger.error("Path error with package");
-                Err(anyhow!(e))
-            }
-        }?;
+        if package_path.is_dir() {
+            logger.indent(1).log("Path ok");
+            Ok(package_path.to_path_buf())
+        } else {
+            Err(anyhow!(
+                "Package path ({}) is not a directory",
+                package_path.display()
+            ))
+        }
+    }
 
+    fn get_manifest_path_buf(&self, package_path: PathBuf) -> Result<PathBuf> {
+        let mut logger = Logger::new();
         logger.info("Validating manifest path");
+
         let manifest_path = package_path.join("hermione.yml");
-        match manifest_path.metadata() {
-            Ok(_) => {
-                logger.indent(1).log("Path ok");
-                Ok(())
-            }
-            Err(e) => {
-                logger.error("Path error with manifest");
-                Err(anyhow!(e))
-            }
-        }?;
+        if manifest_path.exists() {
+            logger.indent(1).log("Path ok");
+            Ok(manifest_path)
+        } else {
+            logger.error("Path error with manifest");
+            Err(anyhow!("Path error in manifest"))
+        }
+    }
+
+    pub fn pack(self) -> Result<String> {
+        let mut logger = Logger::new();
+        let package_path = self.get_package_path_buf()?;
+        let manifest_path = self.get_manifest_path_buf(package_path.to_path_buf())?;
 
         logger.loading("Loading package manifest");
         let manifest = Manifest::new_from_path(manifest_path.to_path_buf())?;
