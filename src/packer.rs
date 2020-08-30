@@ -1,11 +1,11 @@
 use anyhow::{anyhow, Result};
-use flate2::write::GzEncoder;
+use flate2::write::{GzDecoder, GzEncoder};
 use flate2::Compression;
 use paris::Logger;
-use tar::Builder;
+use tar::{Archive, Builder};
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::manifest::Manifest;
 
@@ -95,10 +95,15 @@ impl Packer {
         Ok(format!("{}", loc.to_string_lossy()))
     }
 
-    pub fn unpack(self) -> Result<String> {
+    pub fn unpack(self, dest: PathBuf) -> Result<String> {
         let mut logger = Logger::new();
         logger.loading("Starting unpack");
+        let archive_file = fs::File::open(Path::new(&self.package_string_path))?;
+        let decoder = GzDecoder::new(archive_file);
+        let mut archive = Archive::new(decoder);
+
+        archive.unpack(&dest)?;
         logger.success("Done");
-        Ok(format!("Todo"))
+        Ok(format!("{}", dest.display()))
     }
 }
