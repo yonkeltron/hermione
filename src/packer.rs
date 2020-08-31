@@ -60,8 +60,8 @@ impl Packer {
 
         let archive_file_location = format!("{}.hpkg", manifest.name);
         let archive_file = fs::File::create(&archive_file_location)?;
-        let encoder = GzEncoder::new(archive_file, Compression::default());
-        let mut builder = Builder::new(encoder);
+        //let encoder = GzEncoder::new(archive_file, Compression::default());
+        let mut builder = Builder::new(archive_file);
 
         logger.info(format!("Packaging {}", package_path.display()));
         let mut mappings = Vec::new();
@@ -97,9 +97,9 @@ impl Packer {
     pub fn unpack(self, dest: PathBuf) -> Result<String> {
         let mut logger = Logger::new();
         logger.loading("Starting unpack");
-        let archive_file = fs::File::open(Path::new(&self.package_string_path))?;
-        let decoder = GzDecoder::new(archive_file);
-        let mut archive = Archive::new(decoder);
+        let archive_file = fs::File::open(&self.package_string_path)?;
+        //let decoder = GzDecoder::new(archive_file);
+        let mut archive = Archive::new(archive_file);
 
         archive.unpack(&dest)?;
         logger.success("Done");
