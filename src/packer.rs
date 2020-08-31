@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
-use flate2::write::{GzDecoder, GzEncoder};
+use flate2::read::GzDecoder;
+use flate2::write::GzEncoder;
 use flate2::Compression;
 use paris::Logger;
 use tar::{Archive, Builder};
@@ -60,8 +61,8 @@ impl Packer {
 
         let archive_file_location = format!("{}.hpkg", manifest.name);
         let archive_file = fs::File::create(&archive_file_location)?;
-        //let encoder = GzEncoder::new(archive_file, Compression::default());
-        let mut builder = Builder::new(archive_file);
+        let encoder = GzEncoder::new(archive_file, Compression::best());
+        let mut builder = Builder::new(encoder);
 
         logger.info(format!("Packaging {}", package_path.display()));
         let mut mappings = Vec::new();
@@ -96,10 +97,13 @@ impl Packer {
 
     pub fn unpack(self, dest: PathBuf) -> Result<String> {
         let mut logger = Logger::new();
-        logger.loading("Starting unpack");
+        logger.loading(format!(
+            "Starting unpack on file {}",
+            &self.package_string_path
+        ));
         let archive_file = fs::File::open(&self.package_string_path)?;
-        //let decoder = GzDecoder::new(archive_file);
-        let mut archive = Archive::new(archive_file);
+        let decoder = GzDecoder::new(archive_file);
+        let mut archive = Archive::new(decoder);
 
         archive.unpack(&dest)?;
         logger.success("Done");
