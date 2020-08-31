@@ -1,8 +1,6 @@
 use anyhow::Result;
 use paris::Logger;
 
-use std::path::Path;
-
 use crate::action::Action;
 use crate::package_service::PackageService;
 use crate::packer::Packer;
