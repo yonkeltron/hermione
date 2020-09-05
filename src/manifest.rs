@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 
 use std::fs;
+use std::io;
 use std::path::PathBuf;
 
 use crate::file_mapping_definition::FileMappingDefinition;
@@ -37,5 +38,13 @@ impl Manifest {
         } else {
             Err(anyhow!("Looks like {} is not a file", path.display()))
         }
+    }
+
+    /// Generates a Manifest struct from a given `hermione.yml` reader data.
+    pub fn new_from_reader<R>(data: R) -> Result<Manifest>
+    where
+        R: io::Read,
+    {
+        Ok(serde_yaml::from_reader(data)?)
     }
 }
