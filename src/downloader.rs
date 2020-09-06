@@ -1,6 +1,5 @@
 use anyhow::Result;
 use paris::Logger;
-use reqwest;
 use tempfile::Builder;
 
 use std::fs;

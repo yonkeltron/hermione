@@ -125,7 +125,7 @@ impl DownloadedPackage {
 
             Ok(InstalledPackage {
                 local_path: install_path,
-                package_id: package_id,
+                package_id,
                 package_service: self.package_service,
             })
         }

@@ -118,7 +118,7 @@ impl Packer {
             "Added <blue>{}</> to package archive",
             manifest_path
                 .file_name()
-                .unwrap_or(std::ffi::OsStr::new("hermione.yml"))
+                .unwrap_or_else(|| std::ffi::OsStr::new("hermione.yml"))
                 .to_string_lossy()
         ));
 
