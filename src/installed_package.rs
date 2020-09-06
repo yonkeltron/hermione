@@ -25,7 +25,7 @@ impl InstalledPackage {
     /// First we try to remove all the files it installed in the
     /// manifest before we remove the package directory itself.
     pub fn uninstall(&self) -> Result<DownloadedPackage> {
-        let manifest_path = self.local_path.join("hermione.yml");
+        let manifest_path = self.local_path.join(Manifest::manifest_file_name());
         let mut logger = Logger::new();
         logger.info(format!(
             "Unlinking files defined in Manifest file: {}",
@@ -60,7 +60,7 @@ impl InstalledPackage {
     /// Removed the package directory it self after the files of this
     /// package have been successfully uninstalled.
     pub fn remove(self) -> Result<bool> {
-        let manifest_path = self.local_path.join("hermione.yml");
+        let manifest_path = self.local_path.join(Manifest::manifest_file_name());
         let manifest = Manifest::new_from_path(manifest_path)?;
 
         let downloaded_package = self.uninstall()?;

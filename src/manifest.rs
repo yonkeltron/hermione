@@ -8,6 +8,8 @@ use std::path::PathBuf;
 use crate::file_mapping_definition::FileMappingDefinition;
 use crate::hooks::Hooks;
 
+const MANIFEST_FILE_NAME: &str = "hermione.yml";
+
 /// Manifest represents the definition of your Hermione package.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Manifest {
@@ -46,5 +48,9 @@ impl Manifest {
         R: io::Read,
     {
         Ok(serde_yaml::from_reader(data)?)
+    }
+
+    pub fn manifest_file_name() -> String {
+        String::from(MANIFEST_FILE_NAME)
     }
 }

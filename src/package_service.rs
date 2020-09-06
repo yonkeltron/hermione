@@ -225,7 +225,7 @@ impl PackageService {
             if path.is_dir() {
                 logger.info(format!("Installing from directory {}", path.display()));
 
-                let manifest_path = path.join("hermione.yml");
+                let manifest_path = path.join(Manifest::manifest_file_name());
                 let manifest = Manifest::new_from_path(manifest_path)?;
                 let download_package_dir = download_dir.join(manifest.id);
                 logger.info(format!(

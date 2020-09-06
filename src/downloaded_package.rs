@@ -25,7 +25,7 @@ impl DownloadedPackage {
     /// Returns InstalledPackage Result.
     pub fn install(self) -> Result<InstalledPackage> {
         let mut logger = Logger::new();
-        let manifest_path = self.local_path.join("hermione.yml");
+        let manifest_path = self.local_path.join(Manifest::manifest_file_name());
         let manifest = Manifest::new_from_path(manifest_path)?;
         let package_id = manifest.id.clone();
         let mapping_render_results = manifest
@@ -142,7 +142,7 @@ impl DownloadedPackage {
     /// Returns a Result of InstalledPackage
     pub fn upgrade(self) -> Result<InstalledPackage> {
         let mut logger = Logger::new();
-        let manifest_path = self.local_path.join("hermione.yml");
+        let manifest_path = self.local_path.join(Manifest::manifest_file_name());
         let manifest = Manifest::new_from_path(manifest_path)?;
         logger.loading(format!("Started upgrading {}", &manifest.name));
 

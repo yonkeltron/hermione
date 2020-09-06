@@ -5,6 +5,7 @@ use flate2::Compression;
 use paris::Logger;
 use tar::{Archive, Builder};
 
+use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -40,7 +41,7 @@ impl Packer {
         let mut logger = Logger::new();
         logger.info("Validating manifest path");
 
-        let manifest_path = package_path.join("hermione.yml");
+        let manifest_path = package_path.join(Manifest::manifest_file_name());
         if manifest_path.exists() {
             logger
                 .indent(1)
@@ -62,7 +63,7 @@ impl Packer {
             .find(|entry| match entry.path() {
                 Ok(path) => {
                     if let Some(file_name) = path.file_name() {
-                        file_name == "hermione.yml"
+                        file_name == Manifest::manifest_file_name().as_str()
                     } else {
                         false
                     }
@@ -111,14 +112,14 @@ impl Packer {
             "Wrote integrity data to {}",
             manifest_path.display()
         ));
-        builder.append_path_with_name(&manifest_path, "hermione.yml")?;
+        builder.append_path_with_name(&manifest_path, Manifest::manifest_file_name())?;
         builder.finish()?;
         builder.into_inner()?;
         logger.indent(1).log(format!(
             "Added <blue>{}</> to package archive",
             manifest_path
                 .file_name()
-                .unwrap_or_else(|| std::ffi::OsStr::new("hermione.yml"))
+                .unwrap_or(OsStr::new(&Manifest::manifest_file_name().as_str()))
                 .to_string_lossy()
         ));
 
