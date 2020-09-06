@@ -16,7 +16,7 @@ pub struct Manifest {
     /// Name of your package 📦.
     pub name: String,
     /// Your name 😀.
-    pub author: String,
+    pub authors: Vec<String>,
     /// A description of your package, short sweet and to the point.
     pub description: String,
     /// A unique "reverse domain name" identifier for your package
