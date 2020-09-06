@@ -134,6 +134,7 @@ impl Packer {
             &self.package_path_buf.display()
         ));
 
+        logger.info("Ingesting manifest file from archive in memory");
         let archive_manifest_file = self.get_manifest_from_archive();
 
         let archive_file = fs::File::open(&self.package_path_buf)?;
@@ -143,8 +144,12 @@ impl Packer {
         match archive_manifest_file {
             Ok(manifest_file) => {
                 let final_dest = dest.join(manifest_file.id);
+                logger.indent(1).log(format!(
+                    "Unpacking package in directory: {}",
+                    final_dest.display()
+                ));
                 archive.unpack(&final_dest)?;
-                logger.success("Done");
+                logger.success("Finished unpacking");
                 Ok(final_dest)
             }
             Err(e) => Err(e),

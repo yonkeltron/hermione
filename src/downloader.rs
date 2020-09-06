@@ -26,7 +26,7 @@ impl Downloader {
     pub fn download(self) -> Result<DownloadedPackage> {
         let mut logger = Logger::new();
 
-        logger.info(format!(
+        logger.loading(format!(
             "Downlaoding hermione package from {}",
             &self.remote_package_path
         ));
@@ -40,9 +40,8 @@ impl Downloader {
             .and_then(|name| if name.is_empty() { None } else { Some(name) })
             .unwrap_or("tmp.bin");
 
-        logger
-            .indent(1)
-            .log(format!("File to download: {}", &fname));
+        logger.success("Finished downloading file");
+        logger.info(format!("File to save: {}", &fname));
 
         let file_path_buf = tmp_dir.path().join(fname);
 
