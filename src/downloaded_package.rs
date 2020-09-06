@@ -32,7 +32,7 @@ impl DownloadedPackage {
             .mappings
             .into_iter()
             .filter(|mapping_definition| mapping_definition.valid_platform_family())
-            .filter(|mapping_definition| {
+            .map(|mapping_definition| {
                 let location = self
                     .package_service
                     .download_dir()
@@ -43,30 +43,23 @@ impl DownloadedPackage {
                 ));
                 match mapping_definition.verify_integrity(location) {
                     Ok(valid) => {
-                        let result = if valid {
-                            "<green>valid</>"
+                        if valid {
+                            mapping_definition.render_file_mapping(
+                                &self.package_service,
+                                self.package_service
+                                    .install_dir()
+                                    .join(&package_id.as_str()),
+                            )
                         } else {
-                            "<red>invalid - skipping</>"
-                        };
-                        logger.indent(1).log(format!("Result: {}", result));
-                        valid
+                            Err(anyhow!("Integrety Check Failed!"))
+                        }
                     }
-                    Err(e) => {
-                        logger.info(format!(
-                            "Integrety Check for <red>{} failed</>, skipping. | Reason: {}",
-                            &mapping_definition.i, e
-                        ));
-                        false
-                    }
+                    Err(e) => Err(anyhow!(
+                        "Unable to conduct integrety check for {} | Reason: {}",
+                        &mapping_definition.i,
+                        e
+                    )),
                 }
-            })
-            .map(|mapping_definition| {
-                mapping_definition.render_file_mapping(
-                    &self.package_service,
-                    self.package_service
-                        .install_dir()
-                        .join(&package_id.as_str()),
-                )
             })
             .collect::<Vec<_>>();
 
@@ -76,7 +69,7 @@ impl DownloadedPackage {
             .collect::<Vec<_>>();
         if !mapping_render_errors.is_empty() {
             mapping_render_errors
-                .iter()
+                .into_iter()
                 .for_each(|error| eprintln!("{:?}", error));
             Err(anyhow!("Unable to install package"))
         } else {
