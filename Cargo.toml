@@ -19,6 +19,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1.0"
 clap = "2.33"
+confy = "0.4"
 directories = "2.0.2"
 duckscript = "0.3.1"
 duckscriptsdk = "0.3.3"
@@ -32,6 +33,7 @@ serde_yaml = "0.8.11"
 ssri = "5.0"
 tar = "0.4"
 tera = "1.0.2"
+toml = "0.5"
 reqwest = { version = "0.10", features = ["blocking"] }
 tempfile = "3"
 

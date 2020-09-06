@@ -4,6 +4,7 @@ use paris::Logger;
 
 mod action;
 mod actions;
+mod config;
 mod downloaded_package;
 mod downloader;
 mod file_mapping;
@@ -13,6 +14,7 @@ mod installed_package;
 mod manifest;
 mod package_service;
 mod packer;
+mod repositories;
 mod scaffold;
 
 use crate::action::Action;
