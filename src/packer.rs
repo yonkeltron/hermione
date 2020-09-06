@@ -146,7 +146,7 @@ impl Packer {
                 logger.success("Done");
                 Ok(final_dest)
             }
-            Err(e) => Err(anyhow!("Could not unpack archive | {}", e)),
+            Err(e) => Err(e),
         }
     }
 }
