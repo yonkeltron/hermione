@@ -1,6 +1,8 @@
 use anyhow::Result;
 use paris::Logger;
 
+use std::path::Path;
+
 use crate::action::Action;
 use crate::package_service::PackageService;
 use crate::packer::Packer;
@@ -14,7 +16,7 @@ impl Action for PackageAction {
     fn execute(self, _package_service: PackageService) -> Result<()> {
         let mut logger = Logger::new();
         logger.info("Initialized");
-        match Packer::new(self.package_path).pack() {
+        match Packer::new(Path::new(&self.package_path).to_path_buf()).pack() {
             Ok(archive_location) => {
                 logger.info(format!("Archive Created at Path: {}", archive_location));
                 Ok(())

@@ -11,20 +11,18 @@ use std::path::{Path, PathBuf};
 use crate::manifest::Manifest;
 
 pub struct Packer {
-    pub package_string_path: String,
+    pub package_path_buf: PathBuf,
 }
 
 impl Packer {
-    pub fn new(package_string_path: String) -> Self {
-        Self {
-            package_string_path,
-        }
+    pub fn new(package_path_buf: PathBuf) -> Self {
+        Self { package_path_buf }
     }
 
     fn get_package_path_buf(&self) -> Result<PathBuf> {
         let mut logger = Logger::new();
         logger.info("Validating package path");
-        let package_path = Path::new(&self.package_string_path);
+        let package_path = &self.package_path_buf;
         if package_path.is_dir() {
             logger
                 .indent(1)
@@ -55,7 +53,7 @@ impl Packer {
     }
 
     fn get_manifest_from_archive(&self) -> Result<Manifest> {
-        let archive_file = fs::File::open(&self.package_string_path)?;
+        let archive_file = fs::File::open(&self.package_path_buf)?;
         let decoder = GzDecoder::new(archive_file);
         let mut archive = Archive::new(decoder);
         if let Some(file_path) = archive
@@ -128,24 +126,25 @@ impl Packer {
         Ok(format!("{}", loc.to_string_lossy()))
     }
 
-    pub fn unpack(self, dest: PathBuf) -> Result<String> {
+    pub fn unpack(self, dest: PathBuf) -> Result<PathBuf> {
         let mut logger = Logger::new();
         logger.loading(format!(
             "Starting unpacking package path {}",
-            &self.package_string_path
+            &self.package_path_buf.display()
         ));
 
         let archive_manifest_file = self.get_manifest_from_archive();
 
-        let archive_file = fs::File::open(&self.package_string_path)?;
+        let archive_file = fs::File::open(&self.package_path_buf)?;
         let decoder = GzDecoder::new(archive_file);
         let mut archive = Archive::new(decoder);
 
         match archive_manifest_file {
             Ok(manifest_file) => {
-                archive.unpack(&dest.join(manifest_file.id))?;
+                let final_dest = dest.join(manifest_file.id);
+                archive.unpack(&final_dest)?;
                 logger.success("Done");
-                Ok(format!("{}", dest.display()))
+                Ok(final_dest)
             }
             Err(e) => Err(anyhow!("Could not unpack archive | {}", e)),
         }

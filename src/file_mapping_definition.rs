@@ -81,12 +81,12 @@ impl FileMappingDefinition {
         }
     }
 
-    pub fn verify_integrity(&self) -> Result<bool> {
+    pub fn verify_integrity(&self, directory_location: PathBuf) -> Result<bool> {
         match &self.integrity {
             Some(checksum) => {
                 let parsed: Integrity = checksum.parse()?;
                 let mut checker = IntegrityChecker::new(parsed);
-                let file_contents = fs::read(&self.i)?;
+                let file_contents = fs::read(directory_location.join(&self.i))?;
                 checker.input(&file_contents);
 
                 Ok(checker.result().is_ok())

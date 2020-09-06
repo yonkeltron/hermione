@@ -14,8 +14,8 @@ use crate::package_service::PackageService;
 pub struct InstalledPackage {
     /// Local PathBuf of the installed package.
     pub local_path: PathBuf,
-    /// Package name.
-    pub package_name: String,
+    /// Package ID.
+    pub package_id: String,
     /// Instance of PackageService.
     pub package_service: PackageService,
 }
@@ -46,15 +46,14 @@ impl InstalledPackage {
         fs::remove_dir_all(&self.local_path)?;
         logger.success(format!(
             "Successfully removed installed package {}",
-            self.package_name.clone(),
+            &manifest.name,
         ));
 
-        let downloaded_path_buf = self.package_service.download_dir().join(&self.package_name);
+        let downloaded_path_buf = self.package_service.download_dir().join(&manifest.id);
 
         Ok(DownloadedPackage {
             local_path: downloaded_path_buf,
             package_service: self.package_service.clone(),
-            package_name: self.package_name.clone(),
         })
     }
 

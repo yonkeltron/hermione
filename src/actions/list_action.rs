@@ -19,7 +19,7 @@ impl Action for ListAction {
                 logger.indent(1).info(format!(
                     "{}. {}",
                     (index + 1).to_string(),
-                    installed_package.package_name.clone()
+                    installed_package.package_id.clone()
                 ));
             });
         logger.success(format!("Displayed: {} Packages", installed_packages.len(),));

@@ -10,8 +10,10 @@ use std::path::{Path, PathBuf};
 use std::process;
 
 use crate::downloaded_package::DownloadedPackage;
-use crate::git_downloader::GitDownloader;
+use crate::downloader::Downloader;
 use crate::installed_package::InstalledPackage;
+use crate::manifest::Manifest;
+use crate::packer::Packer;
 
 const QUALIFIER: &str = "dev";
 const ORGANIZATION: &str = "hermione";
@@ -119,12 +121,12 @@ impl PackageService {
     /// * package_name - The package name must not be the path, but rather the name you called the hermione folder
     ///
     /// Returns an InstalledPackage as a Result.
-    pub fn get_installed_package(self, package_name: String) -> Result<InstalledPackage> {
-        let package_path = self.installed_package_path(&package_name)?;
+    pub fn get_installed_package(self, package_id: String) -> Result<InstalledPackage> {
+        let package_path = self.installed_package_path(&package_id)?;
 
         Ok(InstalledPackage {
             local_path: package_path,
-            package_name,
+            package_id,
             package_service: self,
         })
     }
@@ -165,7 +167,7 @@ impl PackageService {
                     let local_path = entry.clone();
                     InstalledPackage {
                         local_path,
-                        package_name: PackageService::source_to_package_name(&package_name),
+                        package_id: PackageService::source_to_package_name(&package_name),
                         package_service,
                     }
                 })
@@ -205,40 +207,52 @@ impl PackageService {
     ///
     /// Returns an DownloadedPackage as a Result.
     pub fn download(self, src: String) -> Result<DownloadedPackage> {
-        let package_name = Self::source_to_package_name(&src);
-        let checkout_path = self.download_dir();
+        let download_dir = self.download_dir();
         let mut logger = paris::Logger::new();
-        if !checkout_path.exists() {
+        if !download_dir.exists() {
             logger.info(format!(
                 "Creating download directory at {}",
-                &checkout_path.display()
+                &download_dir.display()
             ));
-            dir::create_all(&checkout_path, false)?;
+            dir::create_all(&download_dir, false)?;
         }
 
-        if src.ends_with("git") {
-            logger.info("Detected remote package");
-            let clone_path = checkout_path.join(&package_name);
-            let git_downloader = GitDownloader::new(clone_path, package_name, self);
-            git_downloader.download_or_update(src)
+        if src.starts_with("http") {
+            logger.info("Downloading remote package");
+            Downloader::new(src, self).download()
         } else {
             let path = Path::new(&src).canonicalize()?;
             if path.is_dir() {
+                logger.info(format!("Installing from directory {}", path.display()));
+
+                let manifest_path = path.join("hermione.yml");
+                let manifest = Manifest::new_from_path(manifest_path)?;
+                let download_package_dir = download_dir.join(manifest.id);
                 logger.info(format!(
                     "Copying Package {} -> {}",
-                    checkout_path.display(),
                     path.display(),
+                    download_package_dir.display(),
                 ));
+
                 let mut options = dir::CopyOptions::new();
                 options.copy_inside = true;
                 options.overwrite = true;
-                dir::copy(&path, &checkout_path, &options).with_context(|| {
-                    format!("Error copying package to {}", checkout_path.display())
+                dir::copy(&path, &download_package_dir, &options).with_context(|| {
+                    format!(
+                        "Error copying package to {}",
+                        download_package_dir.display()
+                    )
                 })?;
 
                 Ok(DownloadedPackage {
-                    local_path: checkout_path.join(&package_name),
-                    package_name,
+                    local_path: download_package_dir,
+                    package_service: self,
+                })
+            } else if path.is_file() {
+                logger.info("Unpacking local file");
+                let local_path = Packer::new(path).unpack(self.download_dir())?;
+                Ok(DownloadedPackage {
+                    local_path,
                     package_service: self,
                 })
             } else {
@@ -254,7 +268,7 @@ impl PackageService {
     fn source_to_package_name(src: &str) -> String {
         let path = Path::new(src);
 
-        match path.file_stem() {
+        match path.file_name() {
             Some(stem) => String::from(stem.to_string_lossy()),
             None => String::from("UNKNOWN_PACKAGE"),
         }
@@ -277,7 +291,7 @@ impl PackageService {
             .map(|installed_package| {
                 logger.info(format!(
                     "Removing package: {}",
-                    installed_package.package_name
+                    installed_package.package_id
                 ));
                 installed_package.remove().unwrap_or(false)
             })
