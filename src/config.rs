@@ -38,18 +38,15 @@ impl HermioneConfig {
       .timeout(Duration::from_secs(7))
       .build()?;
 
-    let mut logger = Logger::new();
-
     let available_repositories = self
       .repository_urls
       .iter()
       .map(|repository_url| {
+        let mut logger = Logger::new();
         logger.loading(format!("Fetching repository {}", repository_url));
 
-        let result = client
-          .get(repository_url)
-          .send()
-          .and_then(|response| {
+        let result = match client.get(repository_url).send() {
+          Ok(response) => {
             if response.status().is_success() {
               match response.text() {
                 Ok(text) => Ok(
@@ -65,13 +62,12 @@ impl HermioneConfig {
                 response.status().as_str()
               ))
             }
-          })
-          .or_else(|err| {
-            Err(anyhow!(
-              "Unable to fetch repository file from server: {}",
-              err
-            ))
-          });
+          }
+          Err(err) => Err(anyhow!(
+            "Unable to fetch repository file from server: {}",
+            err
+          )),
+        };
 
         if result.is_ok() {
           logger.success(format!("Fetched repository from {}", repository_url));
@@ -86,6 +82,8 @@ impl HermioneConfig {
       })
       .filter(|res| res.is_ok())
       .map(|ok_res| ok_res.unwrap());
+
+    let mut logger = Logger::new();
 
     logger.info("Finished repository fetch attempt.");
 
