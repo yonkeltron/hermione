@@ -30,6 +30,7 @@ impl DownloadedPackage {
         let package_id = manifest.id.clone();
         let mapping_render_results = manifest
             .mappings
+            .clone()
             .into_iter()
             .filter(|mapping_definition| mapping_definition.valid_platform_family())
             .map(|mapping_definition| {
@@ -37,7 +38,7 @@ impl DownloadedPackage {
                     .package_service
                     .download_dir()
                     .join(&package_id.as_str());
-                logger.info("Integrety Check").indent(1).log(format!(
+                logger.info("Integrity Check").indent(1).log(format!(
                     "Input file: {}",
                     &location.join(&mapping_definition.i).display()
                 ));
@@ -109,7 +110,7 @@ impl DownloadedPackage {
             }
             logger.success(format!("Successfully installed {}", &manifest.name));
 
-            match manifest.hooks {
+            match &manifest.hooks {
                 Some(hooks) => hooks.execute_post_install()?,
                 None => {
                     logger.log("No post_install hook");
@@ -118,7 +119,7 @@ impl DownloadedPackage {
 
             Ok(InstalledPackage {
                 local_path: install_path,
-                package_id,
+                manifest,
                 package_service: self.package_service,
             })
         }

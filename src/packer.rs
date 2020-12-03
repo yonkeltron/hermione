@@ -68,7 +68,7 @@ impl Packer {
             logger.info("Loaded package manifest.").newline(1);
 
             // Create archive container for files
-            let archive_file_location = format!("{}.hpkg", manifest.id);
+            let archive_file_location = format!("{}_{}.hpkg", manifest.id, manifest.version);
             let archive_file = fs::File::create(&archive_file_location)?;
             let encoder = GzEncoder::new(archive_file, Compression::best());
             let mut builder = Builder::new(encoder);

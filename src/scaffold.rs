@@ -37,6 +37,7 @@ impl Scaffold {
                 name: parsed_package_name,
                 description: default_description,
                 id: String::from(package_id),
+                version: String::from("0.1.0"),
                 mappings: vec![
                     FileMappingDefinition::new(
                         String::from("sample.txt"),

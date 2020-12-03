@@ -124,10 +124,11 @@ impl PackageService {
     /// Returns an InstalledPackage as a Result.
     pub fn get_installed_package(self, package_id: String) -> Result<InstalledPackage> {
         let package_path = self.installed_package_path(&package_id)?;
-
+        let manifest_path = package_path.join(Manifest::manifest_file_name());
+        let manifest = Manifest::new_from_path(manifest_path)?;
         Ok(InstalledPackage {
             local_path: package_path,
-            package_id,
+            manifest,
             package_service: self,
         })
     }
@@ -161,18 +162,26 @@ impl PackageService {
                 .collect::<Result<Vec<_>, std::io::Error>>()?;
             entries.sort();
             let dirs = entries.iter().filter(|entry_path| entry_path.is_dir());
-            Ok(dirs
+            let installed = dirs
                 .map(|entry| {
                     let package_name = String::from(entry.to_string_lossy());
                     let package_service = self.clone();
                     let local_path = entry.clone();
-                    InstalledPackage {
-                        local_path,
-                        package_id: PackageService::source_to_package_name(&package_name),
-                        package_service,
+                    let manifest_path = local_path.join(Manifest::manifest_file_name());
+
+                    match Manifest::new_from_path(manifest_path) {
+                        Ok(manifest) => Some(InstalledPackage {
+                            local_path,
+                            manifest,
+                            package_service,
+                        }),
+                        Err(e) => None,
                     }
                 })
-                .collect())
+                .filter(|opt| opt.is_some())
+                .map(|opt| opt.expect("Unable to read manifest from installed package"))
+                .collect();
+            Ok(installed)
         }
     }
 
@@ -276,16 +285,6 @@ impl PackageService {
         }
     }
 
-    /// Parses out a src string into a Path and grabs the stem to get the Hermione package name.
-    fn source_to_package_name(src: &str) -> String {
-        let path = Path::new(src);
-
-        match path.file_name() {
-            Some(stem) => String::from(stem.to_string_lossy()),
-            None => String::from("UNKNOWN_PACKAGE"),
-        }
-    }
-
     /// Purge all installed packages, this will uninstall all installed packages and then remove the install directory.
     ///
     /// If one package fails to uninstall then the install directory is not removed but is left for the owner to
@@ -302,8 +301,8 @@ impl PackageService {
             .into_iter()
             .map(|installed_package| {
                 logger.info(format!(
-                    "Removing package: {}",
-                    installed_package.package_id
+                    "Removing package: {} @ {}",
+                    installed_package.manifest.id, installed_package.manifest.version
                 ));
                 installed_package.remove().unwrap_or(false)
             })

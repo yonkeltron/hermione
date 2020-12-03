@@ -14,8 +14,8 @@ use crate::package_service::PackageService;
 pub struct InstalledPackage {
     /// Local PathBuf of the installed package.
     pub local_path: PathBuf,
-    /// Package ID.
-    pub package_id: String,
+    /// Manifest.
+    pub manifest: Manifest,
     /// Instance of PackageService.
     pub package_service: PackageService,
 }

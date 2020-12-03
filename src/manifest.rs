@@ -1,4 +1,5 @@
 use color_eyre::eyre::{eyre, Result, WrapErr};
+use semver::Version;
 use serde::{Deserialize, Serialize};
 
 use std::fs;
@@ -21,11 +22,13 @@ pub struct Manifest {
     pub description: String,
     /// A unique "reverse domain name" identifier for your package
     pub id: String,
+    /// Manifest version
+    pub version: String,
     /// Mappings define the core operation of Hermione.
     /// Here is where you define the `what` and the `where`
     /// . The what being the file you want to move and the where being where do you want to move it.
     pub mappings: Vec<FileMappingDefinition>,
-
+    /// Optional hooks for duckscript    
     pub hooks: Option<Hooks>,
 }
 
@@ -36,7 +39,7 @@ impl Manifest {
             let yaml = fs::read_to_string(path)?;
             let manifest: Manifest =
                 serde_yaml::from_str(&yaml).wrap_err("Could not parse manifest yaml")?;
-
+            Version::parse(&manifest.version).wrap_err("Invalid semver version in manifest")?;
             Ok(manifest)
         } else {
             Err(eyre!("Looks like {} is not a file", path.display()))
@@ -55,7 +58,9 @@ impl Manifest {
     where
         R: io::Read,
     {
-        Ok(serde_yaml::from_reader(data)?)
+        let manifest: Manifest = serde_yaml::from_reader(data)?;
+        Version::parse(&manifest.version).wrap_err("Invalid semver version in manifest")?;
+        Ok(manifest)
     }
 
     pub fn manifest_file_name() -> String {
