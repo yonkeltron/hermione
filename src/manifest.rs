@@ -1,4 +1,4 @@
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use serde::{Deserialize, Serialize};
 
 use std::fs;
@@ -34,11 +34,19 @@ impl Manifest {
     pub fn new_from_path(path: PathBuf) -> Result<Manifest> {
         if path.is_file() {
             let yaml = fs::read_to_string(path)?;
-            let manifest: Manifest = serde_yaml::from_str(&yaml)?;
+            let manifest: Manifest =
+                serde_yaml::from_str(&yaml).wrap_err("Could not parse manifest yaml")?;
 
             Ok(manifest)
         } else {
             Err(eyre!("Looks like {} is not a file", path.display()))
+        }
+    }
+
+    pub fn set_mappings(self, file_mapping_definitions: Vec<FileMappingDefinition>) -> Self {
+        Self {
+            mappings: file_mapping_definitions,
+            ..self
         }
     }
 

@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use clap::{App, Arg, SubCommand};
 use color_eyre::eyre::{eyre, Result};
 use paris::Logger;
@@ -21,6 +23,7 @@ use crate::action::Action;
 use crate::package_service::PackageService;
 
 fn main() -> Result<()> {
+    color_eyre::install()?;
     let matches = App::new("herm")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))

@@ -95,16 +95,16 @@ impl FileMappingDefinition {
         }
     }
 
-    pub fn set_integrity(&mut self, package_path: PathBuf) -> Result<String> {
+    // Consume FileMapping and set the integrity
+    pub fn with_integrity_set(self, package_path: PathBuf) -> Result<Self> {
         let file_path = package_path.join(&self.i);
         let file_contents = fs::read(file_path)?;
 
         let sri = Integrity::from(&file_contents);
 
-        self.integrity = Some(sri.to_string());
-
-        let integrity_string = sri.to_string();
-
-        Ok(integrity_string)
+        Ok(Self {
+            integrity: Some(sri.to_string()),
+            ..self
+        })
     }
 }
