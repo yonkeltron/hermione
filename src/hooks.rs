@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use color_eyre::eyre::{eyre, Result};
 use duckscript::{runner, types};
 use paris::Logger;
 use serde::{Deserialize, Serialize};
@@ -42,13 +42,13 @@ impl Hooks {
                             logger.newline(1).success("Finished running Duckscript");
                             Ok(())
                         }
-                        Err(e) => Err(anyhow!(
+                        Err(e) => Err(eyre!(
                             "Failed to run Duckscript in {} hook: {}",
                             hook_name,
                             e
                         )),
                     },
-                    Err(e) => Err(anyhow!(
+                    Err(e) => Err(eyre!(
                         "Failed to run Duckscript in {} hook: {}",
                         hook_name,
                         e

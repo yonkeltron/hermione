@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use color_eyre::eyre::{eyre, Result};
 use paris::Logger;
 
 use crate::action::Action;
@@ -20,7 +20,7 @@ impl Action for ImplodeAction {
             Ok(())
         } else {
             logger.error("I am not sure you want me to do this.");
-            Err(anyhow!("Please pass confirm flag if you are sure"))
+            Err(eyre!("Please pass confirm flag if you are sure"))
         }
     }
 }

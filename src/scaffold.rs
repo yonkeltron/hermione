@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use color_eyre::eyre::{eyre, Result};
 use paris::Logger;
 
 use std::collections::HashMap;
@@ -84,7 +84,7 @@ impl Scaffold {
                     "Could not create package directory {}",
                     self.package_path_buf.display()
                 ));
-                Err(anyhow!(e))
+                Err(eyre!(e))
             }
         }
     }
@@ -106,7 +106,7 @@ impl Scaffold {
 
         if hermione_manifest_path.is_file() {
             logger.error("hermione.yml already exists in current directory, will not overwrite");
-            Err(anyhow!("hermione.yml exists in current directory"))
+            Err(eyre!("hermione.yml exists in current directory"))
         } else {
             fs::write(&hermione_manifest_path, hermione_string)?;
             logger.info(format!(

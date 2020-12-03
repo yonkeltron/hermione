@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use fs_extra::dir;
 use paris::Logger;
 
@@ -51,10 +51,10 @@ impl DownloadedPackage {
                                     .join(&package_id.as_str()),
                             )
                         } else {
-                            Err(anyhow!("Integrety Check Failed!"))
+                            Err(eyre!("Integrety Check Failed!"))
                         }
                     }
-                    Err(e) => Err(anyhow!(
+                    Err(e) => Err(eyre!(
                         "Unable to conduct integrety check for {} | Reason: {}",
                         &mapping_definition.i,
                         e
@@ -71,13 +71,13 @@ impl DownloadedPackage {
             mapping_render_errors
                 .into_iter()
                 .for_each(|error| eprintln!("{:?}", error));
-            Err(anyhow!("Unable to install package"))
+            Err(eyre!("Unable to install package"))
         } else {
             logger.info("Running preflight check");
 
             let validated_mappings = self
                 .validate_mappings(mapping_render_results)
-                .with_context(|| {
+                .wrap_err_with(|| {
                     "Bailing on Install! Not all file mappings are valid.".to_string()
                 })?;
 

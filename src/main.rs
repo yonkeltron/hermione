@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Result};
 use clap::{App, Arg, SubCommand};
+use color_eyre::eyre::{eyre, Result};
 use paris::Logger;
 
 mod action;
@@ -206,7 +206,7 @@ fn main() -> Result<()> {
         (subcommand, _) => {
             let mut logger = Logger::new();
             logger.error(format!("Unknown subcommand '{}'", subcommand));
-            return Err(anyhow!("Unknown subcommand. Try 'help'"));
+            return Err(eyre!("Unknown subcommand. Try 'help'"));
         }
     };
 
@@ -215,7 +215,7 @@ fn main() -> Result<()> {
     } else {
         match lockfile.release() {
             Ok(_) => Ok(()),
-            Err(e) => Err(anyhow!("Unable to release lockfile because: {}", e)),
+            Err(e) => Err(eyre!("Unable to release lockfile because: {}", e)),
         }
     }
 }

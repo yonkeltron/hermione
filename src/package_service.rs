@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use directories::{BaseDirs, ProjectDirs};
 use fs_extra::dir;
 use lockfile::Lockfile;
@@ -56,7 +56,7 @@ impl PackageService {
         let d_dir = self.download_dir();
         if !d_dir.is_dir() {
             logger.info(format!("Creating download directory {}", &d_dir.display()));
-            fs::create_dir_all(&d_dir).with_context(|| {
+            fs::create_dir_all(&d_dir).wrap_err_with(|| {
                 format!("Unable to create download directory {}", d_dir.display())
             })?;
         }
@@ -64,7 +64,7 @@ impl PackageService {
         let i_dir = self.install_dir();
         if !i_dir.is_dir() {
             logger.info(format!("Creating install directory: {}", &i_dir.display(),));
-            fs::create_dir_all(&i_dir).with_context(|| {
+            fs::create_dir_all(&i_dir).wrap_err_with(|| {
                 format!("Unable to create install directory {}", i_dir.display())
             })?;
         }
@@ -83,14 +83,14 @@ impl PackageService {
     }
 
     /// Returns a lockfile path
-    pub fn lockfile(&self) -> Result<Lockfile, anyhow::Error> {
+    pub fn lockfile(&self) -> Result<Lockfile> {
         let lockfile_name = "hermione.lock";
         let lockfile_path = self.install_dir().join(lockfile_name);
 
         match Lockfile::create(&lockfile_path) {
             Ok(mut lockfile) => {
                 let proc_id = format!("{}", process::id());
-                lockfile.write_all(proc_id.as_bytes()).with_context(|| {
+                lockfile.write_all(proc_id.as_bytes()).wrap_err_with(|| {
                     format!(
                         "Unable to write PID to lockfile at {}",
                         lockfile_path.display()
@@ -99,7 +99,7 @@ impl PackageService {
 
                 Ok(lockfile)
             }
-            Err(err) => Err(anyhow!(
+            Err(err) => Err(eyre!(
                 "Is Hermione already running? Unable to obtain lockfile at {} because: {}",
                 lockfile_path.display(),
                 err
@@ -111,7 +111,7 @@ impl PackageService {
     pub fn home_dir(&self) -> Result<PathBuf> {
         match BaseDirs::new() {
             Some(base_dirs) => Ok(base_dirs.home_dir().to_path_buf()),
-            None => Err(anyhow!("Unable to find HOME directory")),
+            None => Err(eyre!("Unable to find HOME directory")),
         }
     }
 
@@ -144,9 +144,9 @@ impl PackageService {
         if path.is_dir() && !package_name.trim().is_empty() {
             Ok(path)
         } else if package_name.trim().is_empty() {
-            Err(anyhow!("Package name can not be empty."))
+            Err(eyre!("Package name can not be empty."))
         } else {
-            Err(anyhow!("It appears that {} isn't installed.", package_name))
+            Err(eyre!("It appears that {} isn't installed.", package_name))
         }
     }
 
@@ -184,7 +184,7 @@ impl PackageService {
     pub fn project_dirs() -> Result<ProjectDirs> {
         match ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION) {
             Some(pd) => Ok(pd),
-            None => Err(anyhow!("Unable to determine directory structure.")),
+            None => Err(eyre!("Unable to determine directory structure.")),
         }
     }
 
@@ -219,7 +219,7 @@ impl PackageService {
         }
 
         let source_url = Url::parse(&src)
-            .with_context(|| format!("Unable to parse package source url {}", &src))?;
+            .wrap_err_with(|| format!("Unable to parse package source url {}", &src))?;
 
         if source_url.scheme().starts_with("http") {
             logger.info("Downloading remote package");
@@ -227,7 +227,7 @@ impl PackageService {
         } else if source_url.scheme().starts_with("file") {
             let path = match source_url.to_file_path() {
                 Ok(file_path) => Ok(file_path),
-                Err(_) => Err(anyhow!(
+                Err(_) => Err(eyre!(
                     "Unable to convert url to path: {}",
                     source_url.path()
                 )),
@@ -247,7 +247,7 @@ impl PackageService {
                 let mut options = dir::CopyOptions::new();
                 options.copy_inside = true;
                 options.overwrite = true;
-                dir::copy(&path, &download_package_dir, &options).with_context(|| {
+                dir::copy(&path, &download_package_dir, &options).wrap_err_with(|| {
                     format!(
                         "Error copying package to {}",
                         download_package_dir.display()
@@ -266,13 +266,10 @@ impl PackageService {
                     package_service: self,
                 })
             } else {
-                Err(anyhow!(
-                    "Path to package does not exist: {}",
-                    path.display()
-                ))
+                Err(eyre!("Path to package does not exist: {}", path.display()))
             }
         } else {
-            Err(anyhow!(
+            Err(eyre!(
                 "Package source URL has unrecognized scheme: {}",
                 source_url.scheme()
             ))
@@ -316,7 +313,7 @@ impl PackageService {
         if errored_uninstalled.is_empty() {
             Ok(())
         } else {
-            Err(anyhow!("Failed to uninstall all packages"))
+            Err(eyre!("Failed to uninstall all packages"))
         }
     }
 

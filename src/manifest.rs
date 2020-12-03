@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use color_eyre::eyre::{eyre, Result};
 use serde::{Deserialize, Serialize};
 
 use std::fs;
@@ -38,7 +38,7 @@ impl Manifest {
 
             Ok(manifest)
         } else {
-            Err(anyhow!("Looks like {} is not a file", path.display()))
+            Err(eyre!("Looks like {} is not a file", path.display()))
         }
     }
 

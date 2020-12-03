@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use color_eyre::eyre::{eyre, Result};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use flate2::Compression;
@@ -30,7 +30,7 @@ impl Packer {
                 .log(format!("Path Ok | {}", package_path.display()));
             Ok(package_path.to_path_buf())
         } else {
-            Err(anyhow!(
+            Err(eyre!(
                 "Package path ({}) is not a directory",
                 package_path.display()
             ))
@@ -49,7 +49,7 @@ impl Packer {
             Ok(manifest_path)
         } else {
             logger.error("Path error with manifest");
-            Err(anyhow!("Path error in manifest"))
+            Err(eyre!("Path error in manifest"))
         }
     }
 
@@ -73,7 +73,7 @@ impl Packer {
         {
             Manifest::new_from_reader(file_path)
         } else {
-            Err(anyhow!("Could not find manifest file in archive"))
+            Err(eyre!("Could not find manifest file in archive"))
         }
     }
 

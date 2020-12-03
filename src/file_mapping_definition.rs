@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use color_eyre::eyre::{eyre, Result};
 use serde::{Deserialize, Serialize};
 use ssri::{Integrity, IntegrityChecker};
 use tera::{Context, Tera};
@@ -65,7 +65,7 @@ impl FileMappingDefinition {
                 let o_path = Path::new(&o).to_path_buf();
                 Ok(FileMapping::new(i_path, o_path))
             }
-            Err(e) => Err(anyhow!(
+            Err(e) => Err(eyre!(
                 "Unable to calculate file mapping {} because {}",
                 self.o,
                 e.to_string()
