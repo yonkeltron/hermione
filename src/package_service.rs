@@ -398,22 +398,6 @@ mod tests {
     }
 
     #[test]
-    fn test_source_to_package_name_with_url() {
-        let input = "http://github.com/panda/bamboo.git";
-        let expected = String::from("bamboo");
-
-        assert_eq!(PackageService::source_to_package_name(input), expected);
-    }
-
-    #[test]
-    fn test_source_to_package_name_with_local_path() {
-        let input = "./panda";
-        let expected = String::from("panda");
-
-        assert_eq!(PackageService::source_to_package_name(input), expected);
-    }
-
-    #[test]
     fn test_download() {
         defer!(purge());
 
