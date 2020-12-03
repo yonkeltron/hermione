@@ -27,7 +27,7 @@ impl Downloader {
         let mut logger = Logger::new();
 
         logger.loading(format!(
-            "Downlaoding hermione package from {}",
+            "Downloading hermione package from {}",
             &self.remote_package_path
         ));
 

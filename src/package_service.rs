@@ -3,6 +3,7 @@ use directories::{BaseDirs, ProjectDirs};
 use fs_extra::dir;
 use lockfile::Lockfile;
 use paris::Logger;
+use url::Url;
 
 use std::fs;
 use std::io::Write;
@@ -217,11 +218,20 @@ impl PackageService {
             dir::create_all(&download_dir, false)?;
         }
 
-        if src.starts_with("http") {
+        let source_url = Url::parse(&src)
+            .with_context(|| format!("Unable to parse package source url {}", &src))?;
+
+        if source_url.scheme().starts_with("http") {
             logger.info("Downloading remote package");
             Downloader::new(src, self).download()
-        } else {
-            let path = Path::new(&src).canonicalize()?;
+        } else if source_url.scheme().starts_with("file") {
+            let path = match source_url.to_file_path() {
+                Ok(file_path) => Ok(file_path),
+                Err(_) => Err(anyhow!(
+                    "Unable to convert url to path: {}",
+                    source_url.path()
+                )),
+            }?;
             if path.is_dir() {
                 logger.info(format!("Installing from directory {}", path.display()));
 
@@ -261,6 +271,11 @@ impl PackageService {
                     path.display()
                 ))
             }
+        } else {
+            Err(anyhow!(
+                "Package source URL has unrecognized scheme: {}",
+                source_url.scheme()
+            ))
         }
     }
 
