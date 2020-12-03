@@ -45,12 +45,12 @@ fn main() -> Result<()> {
         )
         .subcommand(
             SubCommand::with_name("implode")
-                .about("completely remove Hermione from the system")
+                .about("completely remove Hermione packages from the system")
                 .version(env!("CARGO_PKG_VERSION"))
                 .author(env!("CARGO_PKG_AUTHORS"))
                 .arg(
                     Arg::with_name("confirm")
-                        .help("pointer to package (git URL or local file path)")
+                        .help("confirms your choice to implode, warning all hermione packages will be removed")
                         .long("yes-i-am-sure")
                         .required(true),
                 ),
