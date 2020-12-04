@@ -106,7 +106,7 @@ mod tests {
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
         let installed_package = package_service
-            .download_and_install("./example-package".to_string())
+            .download_and_install("file://./example-package".to_string())
             .expect("Failed to install package");
 
         let test_package_service =

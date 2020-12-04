@@ -7,7 +7,7 @@ use url::Url;
 
 use std::fs;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process;
 
 use crate::downloaded_package::DownloadedPackage;
@@ -164,7 +164,6 @@ impl PackageService {
             let dirs = entries.iter().filter(|entry_path| entry_path.is_dir());
             let installed = dirs
                 .map(|entry| {
-                    let package_name = String::from(entry.to_string_lossy());
                     let package_service = self.clone();
                     let local_path = entry.clone();
                     let manifest_path = local_path.join(Manifest::manifest_file_name());
@@ -175,7 +174,7 @@ impl PackageService {
                             manifest,
                             package_service,
                         }),
-                        Err(e) => None,
+                        Err(_) => None,
                     }
                 })
                 .filter(|opt| opt.is_some())
@@ -234,13 +233,18 @@ impl PackageService {
             logger.info("Downloading remote package");
             Downloader::new(src, self).download()
         } else if source_url.scheme().starts_with("file") {
-            let path = match source_url.to_file_path() {
-                Ok(file_path) => Ok(file_path),
-                Err(_) => Err(eyre!(
-                    "Unable to convert url to path: {}",
-                    source_url.path()
-                )),
-            }?;
+            let file_path = PathBuf::from(source_url.path());
+            // Check if domain is available for case where file://./relative_file
+            let path = match source_url.domain() {
+                Some(domain) => {
+                    let rel_path = fs::canonicalize(PathBuf::from(domain)).wrap_err_with(|| {
+                        format!("Failed to get local absolute path for {}", domain)
+                    })?;
+                    rel_path.join(file_path.strip_prefix("/")?)
+                }
+                None => file_path,
+            };
+
             if path.is_dir() {
                 logger.info(format!("Installing from directory {}", path.display()));
 
@@ -382,7 +386,7 @@ mod tests {
     fn test_list_installed_packages_with_package() {
         defer!(purge());
 
-        let src = String::from("./example-package");
+        let src = String::from("file://./example-package");
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
         package_service
@@ -401,7 +405,7 @@ mod tests {
     fn test_download() {
         defer!(purge());
 
-        let src = String::from("./example-package");
+        let src = String::from("file://./example-package");
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
         let package = package_service
@@ -415,7 +419,7 @@ mod tests {
     fn test_download_and_install() {
         defer!(purge());
 
-        let src = String::from("./example-package");
+        let src = String::from("file://./example-package");
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
 
@@ -442,7 +446,7 @@ mod tests {
             PackageService::new().expect("Could not create package service in test");
 
         package_service
-            .download_and_install("./example-package".to_string())
+            .download_and_install("file://./example-package".to_string())
             .expect("Failed to install package in test");
 
         let test_package_service =
