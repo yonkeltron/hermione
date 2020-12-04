@@ -431,8 +431,8 @@ mod tests {
             PackageService::new().expect("Unable to instantiate PackageService in test");
 
         let installed_path = test_package_service
-            .installed_package_path("example-package")
-            .expect("Unable to remove example-packahe in test");
+            .installed_package_path("org.hermione.example-package")
+            .expect("Unable to remove example-package in test");
         assert!(installed_path.is_dir());
     }
 
@@ -440,7 +440,7 @@ mod tests {
     fn test_install_package_path() {
         defer!(purge());
 
-        let package_name = "example-package";
+        let package_name = "org.hermione.example-package";
 
         let package_service: PackageService =
             PackageService::new().expect("Could not create package service in test");

@@ -102,7 +102,7 @@ mod tests {
     #[test]
     fn test_from_package_name_with_real_name() {
         defer!(purge());
-        let name = String::from("example-package");
+        let name = String::from("org.hermione.example-package");
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
         let installed_package = package_service

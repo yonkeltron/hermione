@@ -74,16 +74,16 @@ fn smoke_test_install_example_package() {
 
     let mut cmd = Command::cargo_bin("herm").unwrap();
     cmd.arg("install")
-        .arg("example-package")
+        .arg("file://./example-package")
         .env("XDG_DATA_HOME", &temp_dir_path)
         .env("HOME", &test_home_dir.path())
         .assert()
-        .append_context("main", "install example-package")
+        .append_context("main", "install file://./example-package")
         .success();
 
     temp_dir
         .child("herm")
-        .child("example-package")
+        .child("org.hermione.example-package")
         .assert(predicate::path::is_dir());
 
     test_home_dir
@@ -100,11 +100,11 @@ fn smoke_test_pre_install_hook() {
 
     let mut cmd = Command::cargo_bin("herm").unwrap();
     cmd.arg("install")
-        .arg("example-package")
+        .arg("file://./example-package")
         .env("XDG_DATA_HOME", &temp_dir_path)
         .env("HOME", &test_home_dir.path())
         .assert()
-        .append_context("main", "install example-package")
+        .append_context("main", "install file://./example-package")
         .stdout(predicate::str::contains("Hello from pre_install hook"));
 }
 
@@ -117,11 +117,11 @@ fn smoke_test_post_install_hook() {
 
     let mut cmd = Command::cargo_bin("herm").unwrap();
     cmd.arg("install")
-        .arg("example-package")
+        .arg("file://./example-package")
         .env("XDG_DATA_HOME", &temp_dir_path)
         .env("HOME", &test_home_dir.path())
         .assert()
-        .append_context("main", "install example-package")
+        .append_context("main", "install file://./example-package")
         .stdout(predicate::str::contains("Hello from post_install hook"));
 }
 
@@ -135,20 +135,20 @@ fn smoke_test_pre_remove_hook() {
     let mut install_cmd = Command::cargo_bin("herm").unwrap();
     install_cmd
         .arg("install")
-        .arg("example-package")
+        .arg("file://./example-package")
         .env("XDG_DATA_HOME", &temp_dir_path)
         .env("HOME", &test_home_dir.path())
         .assert()
-        .append_context("main", "install example-package")
+        .append_context("main", "install file://./example-package")
         .success();
 
     let mut cmd = Command::cargo_bin("herm").unwrap();
     cmd.arg("remove")
-        .arg("example-package")
+        .arg("org.hermione.example-package")
         .env("XDG_DATA_HOME", &temp_dir_path)
         .env("HOME", &test_home_dir.path())
         .assert()
-        .append_context("main", "remove example-package")
+        .append_context("main", "remove org.hermione.example-package")
         .stdout(predicate::str::contains("Hello from pre_remove hook"));
 }
 
@@ -162,19 +162,19 @@ fn smoke_test_post_remove_hook() {
     let mut install_cmd = Command::cargo_bin("herm").unwrap();
     install_cmd
         .arg("install")
-        .arg("example-package")
+        .arg("file://./example-package")
         .env("XDG_DATA_HOME", &temp_dir_path)
         .env("HOME", &test_home_dir.path())
         .assert()
-        .append_context("main", "install example-package")
+        .append_context("main", "install file://./example-package")
         .success();
 
     let mut cmd = Command::cargo_bin("herm").unwrap();
     cmd.arg("remove")
-        .arg("example-package")
+        .arg("org.hermione.example-package")
         .env("XDG_DATA_HOME", &temp_dir_path)
         .env("HOME", &test_home_dir.path())
         .assert()
-        .append_context("main", "remove example-package")
+        .append_context("main", "remove org.hermione.example-package")
         .stdout(predicate::str::contains("Hello from post_remove hook"));
 }
