@@ -127,21 +127,44 @@ fn main() -> Result<()> {
                 ),
         )
         .subcommand(
+            SubCommand::with_name("update")
+                .about("update all remote repos")
+                .version(env!("CARGO_PKG_VERSION"))
+                .author(env!("CARGO_PKG_AUTHORS")),
+        )
+        .subcommand(
             SubCommand::with_name("repo")
                 .about("manage repositories")
                 .version(env!("CARGO_PKG_VERSION"))
                 .author(env!("CARGO_PKG_AUTHORS"))
                 .subcommand(
-                    SubCommand::with_name("add").about("add a repository")                .version(env!("CARGO_PKG_VERSION"))
+                    SubCommand::with_name("add")
+                    .about("add a repository")                
                     .author(env!("CARGO_PKG_AUTHORS"))
-                .arg(
-                    Arg::with_name("URL")
+                    .version(env!("CARGO_PKG_VERSION"))
+                    .arg(
+                        Arg::with_name("URL")
                         .help("add a repo")
                         .required(true)
                         .value_name("REPO_URL")
                         .takes_value(true)
                         .index(1)
-                )),
+                    )
+                )
+                .subcommand(
+                    SubCommand::with_name("remove")
+                    .about("remove a repository")                
+                    .author(env!("CARGO_PKG_AUTHORS"))
+                    .version(env!("CARGO_PKG_VERSION"))
+                    .arg(
+                        Arg::with_name("URL")
+                        .help("remove a repo")
+                        .required(true)
+                        .value_name("REPO_URL")
+                        .takes_value(true)
+                        .index(1)
+                    )
+                )
         )
         .get_matches();
 
