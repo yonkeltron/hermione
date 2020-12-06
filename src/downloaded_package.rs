@@ -1,12 +1,12 @@
-use anyhow::{anyhow, Context, Result};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use fs_extra::dir;
 use paris::Logger;
 
 use std::fs;
 use std::path::PathBuf;
 
+use crate::downloader::Downloader;
 use crate::file_mapping::FileMapping;
-use crate::git_downloader::GitDownloader;
 use crate::installed_package::InstalledPackage;
 use crate::manifest::Manifest;
 use crate::package_service::PackageService;
@@ -16,7 +16,6 @@ use crate::package_service::PackageService;
 /// but not currently installed.
 pub struct DownloadedPackage {
     pub local_path: PathBuf,
-    pub package_name: String,
     pub package_service: PackageService,
 }
 
@@ -25,19 +24,43 @@ impl DownloadedPackage {
     ///
     /// Returns InstalledPackage Result.
     pub fn install(self) -> Result<InstalledPackage> {
-        let manifest_path = self.local_path.join("hermione.yml");
+        let mut logger = Logger::new();
+        let manifest_path = self.local_path.join(Manifest::manifest_file_name());
         let manifest = Manifest::new_from_path(manifest_path)?;
+        let package_id = manifest.id.clone();
         let mapping_render_results = manifest
             .mappings
+            .clone()
             .into_iter()
             .filter(|mapping_definition| mapping_definition.valid_platform_family())
             .map(|mapping_definition| {
-                mapping_definition.render_file_mapping(
-                    &self.package_service,
-                    self.package_service
-                        .install_dir()
-                        .join(self.package_name.as_str()),
-                )
+                let location = self
+                    .package_service
+                    .download_dir()
+                    .join(&package_id.as_str());
+                logger.info("Integrity Check").indent(1).log(format!(
+                    "Input file: {}",
+                    &location.join(&mapping_definition.i).display()
+                ));
+                match mapping_definition.verify_integrity(location) {
+                    Ok(valid) => {
+                        if valid {
+                            mapping_definition.render_file_mapping(
+                                &self.package_service,
+                                self.package_service
+                                    .install_dir()
+                                    .join(&package_id.as_str()),
+                            )
+                        } else {
+                            Err(eyre!("Integrity Check Failed!"))
+                        }
+                    }
+                    Err(e) => Err(eyre!(
+                        "Unable to conduct integrity check for {} | Reason: {}",
+                        &mapping_definition.i,
+                        e
+                    )),
+                }
             })
             .collect::<Vec<_>>();
 
@@ -47,21 +70,21 @@ impl DownloadedPackage {
             .collect::<Vec<_>>();
         if !mapping_render_errors.is_empty() {
             mapping_render_errors
-                .iter()
+                .into_iter()
                 .for_each(|error| eprintln!("{:?}", error));
-            Err(anyhow!("Unable to install package"))
+            Err(eyre!("Unable to install package"))
         } else {
-            let mut logger = Logger::new();
             logger.info("Running preflight check");
 
             let validated_mappings = self
                 .validate_mappings(mapping_render_results)
-                .with_context(|| {
+                .wrap_err_with(|| {
                     "Bailing on Install! Not all file mappings are valid.".to_string()
                 })?;
 
             let mut copy_options = dir::CopyOptions::new();
             copy_options.copy_inside = true;
+            copy_options.overwrite = true;
             let dest_path = self.package_service.install_dir();
             if !dest_path.exists() {
                 logger.loading(format!(
@@ -73,7 +96,7 @@ impl DownloadedPackage {
             }
             logger.info("Installing");
             dir::copy(&self.local_path, &dest_path, &copy_options)?;
-            let install_path = dest_path.join(&self.package_name);
+            let install_path = dest_path.join(&manifest.id);
 
             match &manifest.hooks {
                 Some(hooks) => hooks.execute_pre_install()?,
@@ -85,9 +108,9 @@ impl DownloadedPackage {
             for valid_mapping in validated_mappings {
                 logger.indent(1).log(valid_mapping.install()?);
             }
-            logger.success(format!("Successfully installed {}", self.package_name));
+            logger.success(format!("Successfully installed {}", &manifest.name));
 
-            match manifest.hooks {
+            match &manifest.hooks {
                 Some(hooks) => hooks.execute_post_install()?,
                 None => {
                     logger.log("No post_install hook");
@@ -96,7 +119,7 @@ impl DownloadedPackage {
 
             Ok(InstalledPackage {
                 local_path: install_path,
-                package_name: self.package_name,
+                manifest,
                 package_service: self.package_service,
             })
         }
@@ -113,15 +136,13 @@ impl DownloadedPackage {
     /// Returns a Result of InstalledPackage
     pub fn upgrade(self) -> Result<InstalledPackage> {
         let mut logger = Logger::new();
-        logger.loading(format!("Started upgrading {}", self.package_name));
+        let manifest_path = self.local_path.join(Manifest::manifest_file_name());
+        let manifest = Manifest::new_from_path(manifest_path)?;
+        logger.loading(format!("Started upgrading {}", &manifest.name));
 
-        let git_downloader = GitDownloader::new(
-            self.local_path.clone(),
-            self.package_name.clone(),
-            self.package_service.clone(),
-        );
-
-        match git_downloader.update() {
+        let downloader =
+            Downloader::new(String::from("TODO Implement"), self.package_service.clone());
+        match downloader.download() {
             Ok(_) => {
                 logger.info("Finished fetching latest.");
                 self.install()

@@ -1,9 +1,9 @@
-use anyhow::{anyhow, Result};
+use color_eyre::eyre::{eyre, Result};
 use duckscript::{runner, types};
 use paris::Logger;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Hooks {
     pub pre_install: Option<String>,
     pub post_install: Option<String>,
@@ -42,13 +42,13 @@ impl Hooks {
                             logger.newline(1).success("Finished running Duckscript");
                             Ok(())
                         }
-                        Err(e) => Err(anyhow!(
+                        Err(e) => Err(eyre!(
                             "Failed to run Duckscript in {} hook: {}",
                             hook_name,
                             e
                         )),
                     },
-                    Err(e) => Err(anyhow!(
+                    Err(e) => Err(eyre!(
                         "Failed to run Duckscript in {} hook: {}",
                         hook_name,
                         e

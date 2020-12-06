@@ -1,4 +1,4 @@
-use anyhow::Result;
+use color_eyre::eyre::Result;
 use paris::Logger;
 
 use crate::action::Action;
@@ -17,9 +17,10 @@ impl Action for ListAction {
             .enumerate()
             .for_each(|(index, installed_package)| {
                 logger.indent(1).info(format!(
-                    "{}. {}",
+                    "{}. {} @ {}",
                     (index + 1).to_string(),
-                    installed_package.package_name.clone()
+                    installed_package.manifest.id,
+                    installed_package.manifest.version
                 ));
             });
         logger.success(format!("Displayed: {} Packages", installed_packages.len(),));

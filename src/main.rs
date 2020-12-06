@@ -1,23 +1,29 @@
-use anyhow::{anyhow, Result};
+#![forbid(unsafe_code)]
+
 use clap::{App, Arg, SubCommand};
+use color_eyre::eyre::{eyre, Result};
 use paris::Logger;
 
 mod action;
 mod actions;
+mod config;
 mod downloaded_package;
+mod downloader;
 mod file_mapping;
 mod file_mapping_definition;
-mod git_downloader;
 mod hooks;
 mod installed_package;
 mod manifest;
 mod package_service;
+mod packer;
+mod repositories;
 mod scaffold;
 
 use crate::action::Action;
 use crate::package_service::PackageService;
 
 fn main() -> Result<()> {
+    color_eyre::install()?;
     let matches = App::new("herm")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
@@ -69,6 +75,22 @@ fn main() -> Result<()> {
                     Arg::with_name("PACKAGE")
                         .help("name of installed package")
                         .required(true)
+                        .index(1),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("package")
+                .about("creates a package archive")
+                .version(env!("CARGO_PKG_VERSION"))
+                .author(env!("CARGO_PKG_AUTHORS"))
+                .alias("pack")
+                .arg(
+                    Arg::with_name("path")
+                        .help("path to package")
+                        .required(true)
+                        .takes_value(true)
+                        .value_name("PACKAGE_PATH")
+                        .default_value(".")
                         .index(1),
                 ),
         )
@@ -161,6 +183,16 @@ fn main() -> Result<()> {
             }
             .execute(package_service)?;
         }
+        ("package", Some(package_matches)) => {
+            let package_path = package_matches
+                .value_of("path")
+                .expect("no package path provided");
+
+            actions::package_action::PackageAction {
+                package_path: String::from(package_path),
+            }
+            .execute(package_service)?;
+        }
         ("upgrade", Some(upgrade_matches)) => {
             let package_names = upgrade_matches
                 .values_of("PACKAGE_NAMES")
@@ -177,7 +209,7 @@ fn main() -> Result<()> {
         (subcommand, _) => {
             let mut logger = Logger::new();
             logger.error(format!("Unknown subcommand '{}'", subcommand));
-            return Err(anyhow!("Unknown subcommand. Try 'help'"));
+            return Err(eyre!("Unknown subcommand. Try 'help'"));
         }
     };
 
@@ -186,7 +218,7 @@ fn main() -> Result<()> {
     } else {
         match lockfile.release() {
             Ok(_) => Ok(()),
-            Err(e) => Err(anyhow!("Unable to release lockfile because: {}", e)),
+            Err(e) => Err(eyre!("Unable to release lockfile because: {}", e)),
         }
     }
 }

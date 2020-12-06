@@ -1,17 +1,20 @@
-use anyhow::{anyhow, Context, Result};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use directories::{BaseDirs, ProjectDirs};
 use fs_extra::dir;
 use lockfile::Lockfile;
 use paris::Logger;
+use url::Url;
 
 use std::fs;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process;
 
 use crate::downloaded_package::DownloadedPackage;
-use crate::git_downloader::GitDownloader;
+use crate::downloader::Downloader;
 use crate::installed_package::InstalledPackage;
+use crate::manifest::Manifest;
+use crate::packer::Packer;
 
 const QUALIFIER: &str = "dev";
 const ORGANIZATION: &str = "hermione";
@@ -53,7 +56,7 @@ impl PackageService {
         let d_dir = self.download_dir();
         if !d_dir.is_dir() {
             logger.info(format!("Creating download directory {}", &d_dir.display()));
-            fs::create_dir_all(&d_dir).with_context(|| {
+            fs::create_dir_all(&d_dir).wrap_err_with(|| {
                 format!("Unable to create download directory {}", d_dir.display())
             })?;
         }
@@ -61,7 +64,7 @@ impl PackageService {
         let i_dir = self.install_dir();
         if !i_dir.is_dir() {
             logger.info(format!("Creating install directory: {}", &i_dir.display(),));
-            fs::create_dir_all(&i_dir).with_context(|| {
+            fs::create_dir_all(&i_dir).wrap_err_with(|| {
                 format!("Unable to create install directory {}", i_dir.display())
             })?;
         }
@@ -80,14 +83,14 @@ impl PackageService {
     }
 
     /// Returns a lockfile path
-    pub fn lockfile(&self) -> Result<Lockfile, anyhow::Error> {
+    pub fn lockfile(&self) -> Result<Lockfile> {
         let lockfile_name = "hermione.lock";
         let lockfile_path = self.install_dir().join(lockfile_name);
 
         match Lockfile::create(&lockfile_path) {
             Ok(mut lockfile) => {
                 let proc_id = format!("{}", process::id());
-                lockfile.write_all(proc_id.as_bytes()).with_context(|| {
+                lockfile.write_all(proc_id.as_bytes()).wrap_err_with(|| {
                     format!(
                         "Unable to write PID to lockfile at {}",
                         lockfile_path.display()
@@ -96,7 +99,7 @@ impl PackageService {
 
                 Ok(lockfile)
             }
-            Err(err) => Err(anyhow!(
+            Err(err) => Err(eyre!(
                 "Is Hermione already running? Unable to obtain lockfile at {} because: {}",
                 lockfile_path.display(),
                 err
@@ -108,7 +111,7 @@ impl PackageService {
     pub fn home_dir(&self) -> Result<PathBuf> {
         match BaseDirs::new() {
             Some(base_dirs) => Ok(base_dirs.home_dir().to_path_buf()),
-            None => Err(anyhow!("Unable to find HOME directory")),
+            None => Err(eyre!("Unable to find HOME directory")),
         }
     }
 
@@ -119,12 +122,13 @@ impl PackageService {
     /// * package_name - The package name must not be the path, but rather the name you called the hermione folder
     ///
     /// Returns an InstalledPackage as a Result.
-    pub fn get_installed_package(self, package_name: String) -> Result<InstalledPackage> {
-        let package_path = self.installed_package_path(&package_name)?;
-
+    pub fn get_installed_package(self, package_id: String) -> Result<InstalledPackage> {
+        let package_path = self.installed_package_path(&package_id)?;
+        let manifest_path = package_path.join(Manifest::manifest_file_name());
+        let manifest = Manifest::new_from_path(manifest_path)?;
         Ok(InstalledPackage {
             local_path: package_path,
-            package_name,
+            manifest,
             package_service: self,
         })
     }
@@ -141,9 +145,9 @@ impl PackageService {
         if path.is_dir() && !package_name.trim().is_empty() {
             Ok(path)
         } else if package_name.trim().is_empty() {
-            Err(anyhow!("Package name can not be empty."))
+            Err(eyre!("Package name can not be empty."))
         } else {
-            Err(anyhow!("It appears that {} isn't installed.", package_name))
+            Err(eyre!("It appears that {} isn't installed.", package_name))
         }
     }
 
@@ -158,18 +162,25 @@ impl PackageService {
                 .collect::<Result<Vec<_>, std::io::Error>>()?;
             entries.sort();
             let dirs = entries.iter().filter(|entry_path| entry_path.is_dir());
-            Ok(dirs
+            let installed = dirs
                 .map(|entry| {
-                    let package_name = String::from(entry.to_string_lossy());
                     let package_service = self.clone();
                     let local_path = entry.clone();
-                    InstalledPackage {
-                        local_path,
-                        package_name: PackageService::source_to_package_name(&package_name),
-                        package_service,
+                    let manifest_path = local_path.join(Manifest::manifest_file_name());
+
+                    match Manifest::new_from_path(manifest_path) {
+                        Ok(manifest) => Some(InstalledPackage {
+                            local_path,
+                            manifest,
+                            package_service,
+                        }),
+                        Err(_) => None,
                     }
                 })
-                .collect())
+                .filter(|opt| opt.is_some())
+                .map(|opt| opt.expect("Unable to read manifest from installed package"))
+                .collect();
+            Ok(installed)
         }
     }
 
@@ -181,7 +192,7 @@ impl PackageService {
     pub fn project_dirs() -> Result<ProjectDirs> {
         match ProjectDirs::from(QUALIFIER, ORGANIZATION, APPLICATION) {
             Some(pd) => Ok(pd),
-            None => Err(anyhow!("Unable to determine directory structure.")),
+            None => Err(eyre!("Unable to determine directory structure.")),
         }
     }
 
@@ -205,58 +216,76 @@ impl PackageService {
     ///
     /// Returns an DownloadedPackage as a Result.
     pub fn download(self, src: String) -> Result<DownloadedPackage> {
-        let package_name = Self::source_to_package_name(&src);
-        let checkout_path = self.download_dir();
+        let download_dir = self.download_dir();
         let mut logger = paris::Logger::new();
-        if !checkout_path.exists() {
+        if !download_dir.exists() {
             logger.info(format!(
                 "Creating download directory at {}",
-                &checkout_path.display()
+                &download_dir.display()
             ));
-            dir::create_all(&checkout_path, false)?;
+            dir::create_all(&download_dir, false)?;
         }
 
-        if src.ends_with("git") {
-            logger.info("Detected remote package");
-            let clone_path = checkout_path.join(&package_name);
-            let git_downloader = GitDownloader::new(clone_path, package_name, self);
-            git_downloader.download_or_update(src)
-        } else {
-            let path = Path::new(&src).canonicalize()?;
+        let source_url = Url::parse(&src)
+            .wrap_err_with(|| format!("Unable to parse package source url {}", &src))?;
+
+        if source_url.scheme().starts_with("http") {
+            logger.info("Downloading remote package");
+            Downloader::new(src, self).download()
+        } else if source_url.scheme().starts_with("file") {
+            let file_path = PathBuf::from(source_url.path());
+            // Check if domain is available for case where file://./relative_file
+            let path = match source_url.domain() {
+                Some(domain) => {
+                    let rel_path = fs::canonicalize(PathBuf::from(domain)).wrap_err_with(|| {
+                        format!("Failed to get local absolute path for {}", domain)
+                    })?;
+                    rel_path.join(file_path.strip_prefix("/")?)
+                }
+                None => file_path,
+            };
+
             if path.is_dir() {
+                logger.info(format!("Installing from directory {}", path.display()));
+
+                let manifest_path = path.join(Manifest::manifest_file_name());
+                let manifest = Manifest::new_from_path(manifest_path)?;
+                let download_package_dir = download_dir.join(manifest.id);
                 logger.info(format!(
                     "Copying Package {} -> {}",
-                    checkout_path.display(),
                     path.display(),
+                    download_package_dir.display(),
                 ));
+
                 let mut options = dir::CopyOptions::new();
                 options.copy_inside = true;
                 options.overwrite = true;
-                dir::copy(&path, &checkout_path, &options).with_context(|| {
-                    format!("Error copying package to {}", checkout_path.display())
+                dir::copy(&path, &download_package_dir, &options).wrap_err_with(|| {
+                    format!(
+                        "Error copying package to {}",
+                        download_package_dir.display()
+                    )
                 })?;
 
                 Ok(DownloadedPackage {
-                    local_path: checkout_path.join(&package_name),
-                    package_name,
+                    local_path: download_package_dir,
+                    package_service: self,
+                })
+            } else if path.is_file() {
+                logger.info("Unpacking local file");
+                let local_path = Packer::new(path).unpack(self.download_dir())?;
+                Ok(DownloadedPackage {
+                    local_path,
                     package_service: self,
                 })
             } else {
-                Err(anyhow!(
-                    "Path to package does not exist: {}",
-                    path.display()
-                ))
+                Err(eyre!("Path to package does not exist: {}", path.display()))
             }
-        }
-    }
-
-    /// Parses out a src string into a Path and grabs the stem to get the Hermione package name.
-    fn source_to_package_name(src: &str) -> String {
-        let path = Path::new(src);
-
-        match path.file_stem() {
-            Some(stem) => String::from(stem.to_string_lossy()),
-            None => String::from("UNKNOWN_PACKAGE"),
+        } else {
+            Err(eyre!(
+                "Package source URL has unrecognized scheme: {}",
+                source_url.scheme()
+            ))
         }
     }
 
@@ -276,8 +305,8 @@ impl PackageService {
             .into_iter()
             .map(|installed_package| {
                 logger.info(format!(
-                    "Removing package: {}",
-                    installed_package.package_name
+                    "Removing package: {} @ {}",
+                    installed_package.manifest.id, installed_package.manifest.version
                 ));
                 installed_package.remove().unwrap_or(false)
             })
@@ -287,7 +316,7 @@ impl PackageService {
         if errored_uninstalled.is_empty() {
             Ok(())
         } else {
-            Err(anyhow!("Failed to uninstall all packages"))
+            Err(eyre!("Failed to uninstall all packages"))
         }
     }
 
@@ -357,7 +386,7 @@ mod tests {
     fn test_list_installed_packages_with_package() {
         defer!(purge());
 
-        let src = String::from("./example-package");
+        let src = String::from("file://./example-package");
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
         package_service
@@ -373,26 +402,10 @@ mod tests {
     }
 
     #[test]
-    fn test_source_to_package_name_with_url() {
-        let input = "http://github.com/panda/bamboo.git";
-        let expected = String::from("bamboo");
-
-        assert_eq!(PackageService::source_to_package_name(input), expected);
-    }
-
-    #[test]
-    fn test_source_to_package_name_with_local_path() {
-        let input = "./panda";
-        let expected = String::from("panda");
-
-        assert_eq!(PackageService::source_to_package_name(input), expected);
-    }
-
-    #[test]
     fn test_download() {
         defer!(purge());
 
-        let src = String::from("./example-package");
+        let src = String::from("file://./example-package");
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
         let package = package_service
@@ -406,7 +419,7 @@ mod tests {
     fn test_download_and_install() {
         defer!(purge());
 
-        let src = String::from("./example-package");
+        let src = String::from("file://./example-package");
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
 
@@ -418,8 +431,8 @@ mod tests {
             PackageService::new().expect("Unable to instantiate PackageService in test");
 
         let installed_path = test_package_service
-            .installed_package_path("example-package")
-            .expect("Unable to remove example-packahe in test");
+            .installed_package_path("org.hermione.example-package")
+            .expect("Unable to remove example-package in test");
         assert!(installed_path.is_dir());
     }
 
@@ -427,13 +440,13 @@ mod tests {
     fn test_install_package_path() {
         defer!(purge());
 
-        let package_name = "example-package";
+        let package_name = "org.hermione.example-package";
 
         let package_service: PackageService =
             PackageService::new().expect("Could not create package service in test");
 
         package_service
-            .download_and_install("./example-package".to_string())
+            .download_and_install("file://./example-package".to_string())
             .expect("Failed to install package in test");
 
         let test_package_service =

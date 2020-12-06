@@ -1,4 +1,4 @@
-use anyhow::Result;
+use color_eyre::eyre::Result;
 use paris::Logger;
 
 use std::fs;
@@ -14,8 +14,8 @@ use crate::package_service::PackageService;
 pub struct InstalledPackage {
     /// Local PathBuf of the installed package.
     pub local_path: PathBuf,
-    /// Package name.
-    pub package_name: String,
+    /// Manifest.
+    pub manifest: Manifest,
     /// Instance of PackageService.
     pub package_service: PackageService,
 }
@@ -25,7 +25,7 @@ impl InstalledPackage {
     /// First we try to remove all the files it installed in the
     /// manifest before we remove the package directory itself.
     pub fn uninstall(&self) -> Result<DownloadedPackage> {
-        let manifest_path = self.local_path.join("hermione.yml");
+        let manifest_path = self.local_path.join(Manifest::manifest_file_name());
         let mut logger = Logger::new();
         logger.info(format!(
             "Unlinking files defined in Manifest file: {}",
@@ -46,22 +46,21 @@ impl InstalledPackage {
         fs::remove_dir_all(&self.local_path)?;
         logger.success(format!(
             "Successfully removed installed package {}",
-            self.package_name.clone(),
+            &manifest.name,
         ));
 
-        let downloaded_path_buf = self.package_service.download_dir().join(&self.package_name);
+        let downloaded_path_buf = self.package_service.download_dir().join(&manifest.id);
 
         Ok(DownloadedPackage {
             local_path: downloaded_path_buf,
             package_service: self.package_service.clone(),
-            package_name: self.package_name.clone(),
         })
     }
 
     /// Removed the package directory it self after the files of this
     /// package have been successfully uninstalled.
     pub fn remove(self) -> Result<bool> {
-        let manifest_path = self.local_path.join("hermione.yml");
+        let manifest_path = self.local_path.join(Manifest::manifest_file_name());
         let manifest = Manifest::new_from_path(manifest_path)?;
 
         let downloaded_package = self.uninstall()?;
@@ -103,11 +102,11 @@ mod tests {
     #[test]
     fn test_from_package_name_with_real_name() {
         defer!(purge());
-        let name = String::from("example-package");
+        let name = String::from("org.hermione.example-package");
         let package_service =
             PackageService::new().expect("Unable to instantiate PackageService in test");
         let installed_package = package_service
-            .download_and_install("./example-package".to_string())
+            .download_and_install("file://./example-package".to_string())
             .expect("Failed to install package");
 
         let test_package_service =

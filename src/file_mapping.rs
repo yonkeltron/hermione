@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 
 #[cfg(test)]
 use quickcheck_macros::quickcheck;
@@ -48,7 +48,7 @@ impl FileMapping {
         if !self.o.exists() {
             Ok(format!("{} is <green>valid</>", self.o.display()))
         } else {
-            Err(anyhow!(
+            Err(eyre!(
                 "Install to ({}) is NOT valid! File already exists, Hermione will not overwrite.",
                 self.o.display()
             ))
@@ -72,7 +72,7 @@ impl FileMapping {
             #[cfg(target_family = "unix")]
             let link_result = symlink(&self.i, &self.o);
 
-            link_result.with_context(|| {
+            link_result.wrap_err_with(|| {
                 format!(
                     "Failed to link file {} -> {}",
                     self.i.display(),
@@ -82,12 +82,12 @@ impl FileMapping {
 
             Ok(self.display_line())
         } else if self.o.exists() {
-            Err(anyhow!(
+            Err(eyre!(
                 "{} exists and Hermione will not overwrite it.",
                 self.o.display()
             ))
         } else {
-            Err(anyhow!(
+            Err(eyre!(
                 "Unable to install from {} -> {}",
                 self.i.display(),
                 self.o.display()
