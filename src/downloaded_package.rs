@@ -52,11 +52,11 @@ impl DownloadedPackage {
                                     .join(&package_id.as_str()),
                             )
                         } else {
-                            Err(eyre!("Integrety Check Failed!"))
+                            Err(eyre!("Integrity Check Failed!"))
                         }
                     }
                     Err(e) => Err(eyre!(
-                        "Unable to conduct integrety check for {} | Reason: {}",
+                        "Unable to conduct integrity check for {} | Reason: {}",
                         &mapping_definition.i,
                         e
                     )),
