@@ -35,7 +35,7 @@ impl HermioneConfig {
         Ok(())
     }
 
-    pub fn fetch_repos_and_build_index(&self) -> Result<PackageIndex> {
+    pub fn fetch_and_build_index(&self) -> Result<PackageIndex> {
         let client = Client::builder().timeout(Duration::from_secs(7)).build()?;
 
         let available_repositories = self
