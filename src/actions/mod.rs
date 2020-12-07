@@ -5,4 +5,5 @@ pub mod list_action;
 pub mod new_action;
 pub mod package_action;
 pub mod remove_action;
+pub mod repo_action;
 pub mod upgrade_action;

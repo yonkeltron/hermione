@@ -35,6 +35,39 @@ impl HermioneConfig {
         Ok(())
     }
 
+    pub fn repo_list(&self) -> Vec<String> {
+        self.repository_urls.to_vec()
+    }
+
+    pub fn add_repo_url(self, repo_url: String) -> Self {
+        let found_duplicate = self
+            .repository_urls
+            .to_vec()
+            .into_iter()
+            .find(|url| url.eq(&repo_url));
+        let repository_urls = match found_duplicate {
+            Some(_) => self.repository_urls,
+            None => {
+                let mut new = self.repository_urls.to_vec();
+                new.push(repo_url);
+                new
+            }
+        };
+        Self {
+            repository_urls,
+            ..self
+        }
+    }
+
+    pub fn remove_repo_url(self, repo_url: String) -> Self {
+        let mut repository_urls = self.repository_urls.to_vec();
+        repository_urls.retain(|url| !url.eq(&repo_url));
+        Self {
+            repository_urls,
+            ..self
+        }
+    }
+
     pub fn fetch_and_build_index(&self) -> Result<PackageIndex> {
         let client = Client::builder().timeout(Duration::from_secs(7)).build()?;
 

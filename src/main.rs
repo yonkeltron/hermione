@@ -85,7 +85,7 @@ fn main() -> Result<()> {
                 .author(env!("CARGO_PKG_AUTHORS"))
                 .alias("pack")
                 .arg(
-                    Arg::with_name("path")
+                    Arg::with_name("PACKAGE_PATH")
                         .help("path to package")
                         .required(true)
                         .takes_value(true)
@@ -143,7 +143,7 @@ fn main() -> Result<()> {
                     .author(env!("CARGO_PKG_AUTHORS"))
                     .version(env!("CARGO_PKG_VERSION"))
                     .arg(
-                        Arg::with_name("URL")
+                        Arg::with_name("REPO_URL")
                         .help("add a repo")
                         .required(true)
                         .value_name("REPO_URL")
@@ -157,7 +157,7 @@ fn main() -> Result<()> {
                     .author(env!("CARGO_PKG_AUTHORS"))
                     .version(env!("CARGO_PKG_VERSION"))
                     .arg(
-                        Arg::with_name("URL")
+                        Arg::with_name("REPO_URL")
                         .help("remove a repo")
                         .required(true)
                         .value_name("REPO_URL")
@@ -225,7 +225,7 @@ fn main() -> Result<()> {
         }
         ("package", Some(package_matches)) => {
             let package_path = package_matches
-                .value_of("path")
+                .value_of("PACKAGE_PATH")
                 .expect("no package path provided");
 
             actions::package_action::PackageAction {
@@ -246,6 +246,33 @@ fn main() -> Result<()> {
             }
             .execute(package_service)?;
         }
+        ("repo", Some(repo_matches)) => match repo_matches.subcommand() {
+            ("add", Some(add_repo)) => {
+                let repo_url = add_repo
+                    .value_of("REPO_URL")
+                    .expect("Unable to read url value");
+
+                actions::repo_action::RepoAddAction {
+                    url: String::from(repo_url),
+                }
+                .execute(package_service)?;
+
+                println!("{}", repo_url);
+            }
+            ("remove", Some(remove_repo)) => {
+                let repo_url = remove_repo
+                    .value_of("REPO_URL")
+                    .expect("Unable to read url value");
+
+                actions::repo_action::RepoRemoveAction {
+                    url: String::from(repo_url),
+                }
+                .execute(package_service)?;
+            }
+            (_, _) => {
+                actions::repo_action::RepoAction {}.execute(package_service)?;
+            }
+        },
         (subcommand, _) => {
             let mut logger = Logger::new();
             logger.error(format!("Unknown subcommand '{}'", subcommand));
