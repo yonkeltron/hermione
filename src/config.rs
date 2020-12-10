@@ -70,6 +70,9 @@ impl HermioneConfig {
 
     pub fn fetch_and_build_index(&self) -> Result<PackageIndex> {
         let client = Client::builder().timeout(Duration::from_secs(7)).build()?;
+        let mut logger = Logger::new();
+
+        logger.loading("Fetching repositories...");
 
         let available_repositories = self
             .repository_urls
@@ -79,15 +82,15 @@ impl HermioneConfig {
             .map(|ok_res| ok_res.expect("Unable to instantiate remote repository"))
             .map(|remote_respository| remote_respository.download_contents(&client));
 
-        let mut logger = Logger::new();
-
         logger.info("Finished repository fetch attempt.");
 
+        logger.loading("Building package index...");
         let combined_index = available_repositories
             .filter(|res| res.is_ok())
             .map(|ok_res| ok_res.expect("Unable to build index from successful download"))
             .map(|repository_contents| repository_contents.to_index())
             .fold(HashMap::new(), |a, b| a.into_iter().chain(b).collect());
+        logger.info("Built package index.");
 
         Ok(combined_index)
     }

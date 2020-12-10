@@ -273,6 +273,9 @@ fn main() -> Result<()> {
                 actions::repo_action::RepoAction {}.execute(package_service)?;
             }
         },
+        ("update", Some(_update_matches)) => {
+            actions::update_action::UpdateAction {}.execute(package_service)?;
+        }
         (subcommand, _) => {
             let mut logger = Logger::new();
             logger.error(format!("Unknown subcommand '{}'", subcommand));

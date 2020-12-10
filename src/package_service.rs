@@ -15,6 +15,7 @@ use crate::downloader::Downloader;
 use crate::installed_package::InstalledPackage;
 use crate::manifest::Manifest;
 use crate::packer::Packer;
+use crate::repositories::package_index::PackageIndex;
 
 const QUALIFIER: &str = "dev";
 const ORGANIZATION: &str = "hermione";
@@ -351,6 +352,22 @@ impl PackageService {
             fs::remove_dir_all(self.download_dir())?;
         }
         Ok(())
+    }
+
+    pub fn persist_package_index(&self, package_index: PackageIndex) -> Result<usize> {
+        let package_index_path = self.install_dir().join("index.toml");
+        let index_toml = toml::to_string_pretty(&package_index)?;
+        fs::write(package_index_path, &index_toml)?;
+
+        Ok(index_toml.len())
+    }
+
+    pub fn load_package_index(&self) -> Result<PackageIndex> {
+        let package_index_path = self.install_dir().join("index.toml");
+        let index_toml = fs::read_to_string(package_index_path)?;
+        let package_index: PackageIndex = toml::from_str(&index_toml)?;
+
+        Ok(package_index)
     }
 }
 
