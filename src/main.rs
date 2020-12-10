@@ -1,11 +1,11 @@
 #![forbid(unsafe_code)]
 
-use clap::{App, Arg, SubCommand};
 use color_eyre::eyre::{eyre, Result};
 use paris::Logger;
 
 mod action;
 mod actions;
+mod cli;
 mod config;
 mod downloaded_package;
 mod downloader;
@@ -20,153 +20,12 @@ mod repositories;
 mod scaffold;
 
 use crate::action::Action;
+use crate::cli::get_matches;
 use crate::package_service::PackageService;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
-    let matches = App::new("herm")
-        .version(env!("CARGO_PKG_VERSION"))
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .about(env!("CARGO_PKG_DESCRIPTION"))
-        .subcommand(
-            SubCommand::with_name("init")
-                .about("initialize Hermione manifest file")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS")),
-        )
-        .subcommand(
-            SubCommand::with_name("install")
-                .about("install a Hermione package")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS"))
-                .arg(
-                    Arg::with_name("SOURCE")
-                        .help("pointer to package (git URL or local file path)")
-                        .required(true)
-                        .index(1),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("implode")
-                .about("completely remove Hermione packages from the system")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS"))
-                .arg(
-                    Arg::with_name("confirm")
-                        .help("confirms your choice to implode, warning all hermione packages will be removed")
-                        .long("yes-i-am-sure")
-                        .required(true),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("list")
-                .about("lists installed Hermione packages")
-                .alias("ls")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS")),
-        )
-        .subcommand(
-            SubCommand::with_name("remove")
-                .about("removes Hermione entirely")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS"))
-                .alias("uninstall")
-                .arg(
-                    Arg::with_name("PACKAGE")
-                        .help("name of installed package")
-                        .required(true)
-                        .index(1),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("package")
-                .about("creates a package archive")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS"))
-                .alias("pack")
-                .arg(
-                    Arg::with_name("PACKAGE_PATH")
-                        .help("path to package")
-                        .required(true)
-                        .takes_value(true)
-                        .value_name("PACKAGE_PATH")
-                        .default_value(".")
-                        .index(1),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("new")
-                .about("generate new Hermione package")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS"))
-                .arg(
-                    Arg::with_name("PACKAGE_NAME")
-                        .help("package name")
-                        .required(true)
-                        .index(1),
-                )
-                .arg(
-                    Arg::with_name("PACKAGE_ID")
-                        .help("package reverse domain id <com.example.package>")
-                        .short("i")
-                        .long("id")
-                        .takes_value(true),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("upgrade")
-                .about("upgrade an existing")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS"))
-                .arg(
-                    Arg::with_name("PACKAGE_NAMES")
-                        .help("package names")
-                        .multiple(true)
-                        .default_value("")
-                        .index(1),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("update")
-                .about("update all remote repos")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS")),
-        )
-        .subcommand(
-            SubCommand::with_name("repo")
-                .about("manage repositories")
-                .version(env!("CARGO_PKG_VERSION"))
-                .author(env!("CARGO_PKG_AUTHORS"))
-                .subcommand(
-                    SubCommand::with_name("add")
-                    .about("add a repository")                
-                    .author(env!("CARGO_PKG_AUTHORS"))
-                    .version(env!("CARGO_PKG_VERSION"))
-                    .arg(
-                        Arg::with_name("REPO_URL")
-                        .help("add a repo")
-                        .required(true)
-                        .value_name("REPO_URL")
-                        .takes_value(true)
-                        .index(1)
-                    )
-                )
-                .subcommand(
-                    SubCommand::with_name("remove")
-                    .about("remove a repository")                
-                    .author(env!("CARGO_PKG_AUTHORS"))
-                    .version(env!("CARGO_PKG_VERSION"))
-                    .arg(
-                        Arg::with_name("REPO_URL")
-                        .help("remove a repo")
-                        .required(true)
-                        .value_name("REPO_URL")
-                        .takes_value(true)
-                        .index(1)
-                    )
-                )
-        )
-        .get_matches();
+    let matches = get_matches();
 
     let subcommand_name = String::from(matches.subcommand_name().unwrap_or("error"));
     let package_service = PackageService::new()?;

@@ -1,0 +1,48 @@
+image: rust:latest
+tasks:
+  prep_system:
+    command: |
+      apt-get update
+      apt-get install -y --no-install-recommends rpm
+
+  install_crates:
+    command: |
+      cargo install -f cargo-deb cargo-rpm
+
+  build_release:
+    dependencies:
+      - prep_system
+      - install_crates
+    input_paths:
+      - Cargo.toml
+      - Cargo.lock
+      - src
+      - target
+    output_paths:
+      - target
+    command: cargo build --release
+
+  build_rpm:
+    dependencies:
+      - build_release
+    input_paths:
+      - Cargo.toml
+      - Cargo.lock
+      - src
+      - target
+      - .rpm
+    output_paths:
+      - target
+    command: cargo rpm build
+
+  build_deb:
+    dependencies:
+      - build_release
+    input_paths:
+      - Cargo.toml
+      - Cargo.lock
+      - src
+      - target
+    output_paths:
+      - target
+    command: cargo deb build

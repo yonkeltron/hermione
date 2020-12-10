@@ -46,3 +46,12 @@ predicates = "1.0"
 quickcheck = "0.9"
 quickcheck_macros = "0.9"
 scopeguard = "1.0"
+
+[package.metadata.rpm]
+package = "hermione"
+
+[package.metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+hermione = { path = "/usr/bin/hermione" }
