@@ -256,8 +256,6 @@ fn main() -> Result<()> {
                     url: String::from(repo_url),
                 }
                 .execute(package_service)?;
-
-                println!("{}", repo_url);
             }
             ("remove", Some(remove_repo)) => {
                 let repo_url = remove_repo

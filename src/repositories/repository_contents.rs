@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use crate::repositories::available_package::AvailablePackage;
 use crate::repositories::package_index::PackageIndex;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct RepositoryContents {
     pub name: String,
     pub available_packages: Vec<AvailablePackage>,

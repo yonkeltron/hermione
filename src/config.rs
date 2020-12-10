@@ -1,4 +1,4 @@
-use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::eyre::{Result, WrapErr};
 use paris::Logger;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
@@ -40,19 +40,13 @@ impl HermioneConfig {
     }
 
     pub fn add_repo_url(self, repo_url: String) -> Self {
-        let found_duplicate = self
+        let mut repository_urls: Vec<String> = self
             .repository_urls
             .to_vec()
             .into_iter()
-            .find(|url| url.eq(&repo_url));
-        let repository_urls = match found_duplicate {
-            Some(_) => self.repository_urls,
-            None => {
-                let mut new = self.repository_urls.to_vec();
-                new.push(repo_url);
-                new
-            }
-        };
+            .filter(|url| url.ne(&repo_url))
+            .collect();
+        repository_urls.push(repo_url);
         Self {
             repository_urls,
             ..self
@@ -60,8 +54,12 @@ impl HermioneConfig {
     }
 
     pub fn remove_repo_url(self, repo_url: String) -> Self {
-        let mut repository_urls = self.repository_urls.to_vec();
-        repository_urls.retain(|url| !url.eq(&repo_url));
+        let repository_urls = self
+            .repository_urls
+            .to_vec()
+            .into_iter()
+            .filter(|url| url.ne(&repo_url))
+            .collect();
         Self {
             repository_urls,
             ..self
@@ -69,11 +67,13 @@ impl HermioneConfig {
     }
 
     pub fn fetch_and_build_index(&self) -> Result<PackageIndex> {
-        let client = Client::builder().timeout(Duration::from_secs(7)).build()?;
         let mut logger = Logger::new();
+        let client = Client::builder()
+            .timeout(Duration::from_secs(7))
+            .build()
+            .wrap_err("Failed to create Http client")?;
 
-        logger.loading("Fetching repositories...");
-
+        logger.loading("Indexing repositories");
         let available_repositories = self
             .repository_urls
             .iter()
@@ -92,6 +92,7 @@ impl HermioneConfig {
             .fold(HashMap::new(), |a, b| a.into_iter().chain(b).collect());
         logger.info("Built package index.");
 
+        logger.success("Finished indexing repositories");
         Ok(combined_index)
     }
 }

@@ -45,6 +45,11 @@ impl Action for RepoAddAction {
             .store()
             .wrap_err("Couldn't save Hermione Config")?;
         logger.success(format!("Repo: ({}) Added", self.url));
+        logger.info("Indexing");
+        let packages = HermioneConfig::load()
+            .wrap_err("Couldn't load Hermione Config")?
+            .fetch_and_build_index()?;
+        println!("{:?}", packages);
         Ok(())
     }
 }
