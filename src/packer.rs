@@ -33,7 +33,7 @@ impl Packer {
         }
     }
 
-    fn get_manifest_from_archive(&self) -> Result<Manifest> {
+    pub fn get_manifest_from_archive(&self) -> Result<Manifest> {
         let archive_file = fs::File::open(&self.package_path_buf)?;
         let decoder = GzDecoder::new(archive_file);
         let mut archive = Archive::new(decoder);
