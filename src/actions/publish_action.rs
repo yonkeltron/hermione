@@ -8,6 +8,7 @@ use std::path::Path;
 use crate::action::Action;
 use crate::package_service::PackageService;
 use crate::packer::Packer;
+use crate::repositories::available_version::AvailableVersion;
 
 pub struct PublishAction {
   pub url_prefix: String,
@@ -27,15 +28,34 @@ impl Action for PublishAction {
       let glob_pattern = format!("{}/**/*.hpkg", packages_dir_path.display());
       let globs = glob(&glob_pattern)?;
 
-      globs
+      let available_versions = globs
         .into_iter()
         .filter(|entry| entry.is_ok())
         .map(|entry| entry.unwrap())
         .map(|package_path| {
-          let manifest_result = Packer::new(package_path).get_manifest_from_archive();
+          let manifest_result = Packer::new(package_path.clone()).get_manifest_from_archive();
           if manifest_result.is_ok() {
             let manifest = manifest_result.expect("unable to extract manifest");
-            Some(manifest)
+            let package_name = package_path
+              .file_name()
+              .expect("unable to extract filename")
+              .to_string_lossy();
+            let version = manifest.version;
+            match url_prefix.join(&package_name) {
+              Ok(url) => {
+                let available_version = AvailableVersion {
+                  url: url.to_string(),
+                  version,
+                };
+
+                Some(available_version)
+              }
+              Err(e) => {
+                logger.warn(format!("Unable to construct URL: {}", e));
+
+                None
+              }
+            }
           } else {
             logger.warn(format!(
               "Skipping invalid package {}",
@@ -45,8 +65,8 @@ impl Action for PublishAction {
             None
           }
         })
-        .filter(|manifest_option| manifest_option.is_some())
-        .map(|manifest_option| manifest_option.unwrap());
+        .filter(|opt| opt.is_some())
+        .collect::<Vec<_>>();
 
       Ok(())
     } else {
