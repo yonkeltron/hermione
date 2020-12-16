@@ -782,6 +782,7 @@ dependencies = [
  "duckscriptsdk",
  "flate2",
  "fs_extra",
+ "glob",
  "lockfile",
  "openssl",
  "paris",
