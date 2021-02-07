@@ -1,5 +1,7 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 
+// herm install org.hermione.blah 0.1.0
+
 pub fn get_matches() -> ArgMatches<'static> {
     App::new("herm")
     .version(env!("CARGO_PKG_VERSION"))
@@ -17,11 +19,18 @@ pub fn get_matches() -> ArgMatches<'static> {
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .arg(
-          Arg::with_name("SOURCE")
-            .help("pointer to package (git URL or local file path)")
+          Arg::with_name("ID")
+            .help("package id or local file path")
             .required(true)
+            .value_name("ID")
             .index(1),
-        ),
+        )
+        .arg(
+            Arg::with_name("VERSION")
+              .help("optional package version")
+              .value_name("VERSION")
+              .index(2),
+          ),
     )
     .subcommand(
       SubCommand::with_name("implode")

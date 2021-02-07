@@ -42,11 +42,17 @@ fn main() -> Result<()> {
         }
         ("install", Some(install_matches)) => {
             let package_source = install_matches
-                .value_of("SOURCE")
+                .value_of("ID")
                 .expect("Unable to read source");
+
+            let package_version = match install_matches.value_of("VERSION") {
+                Some(version) => Some(String::from(version)),
+                None => None,
+            };
 
             actions::install_action::InstallAction {
                 package_source: String::from(package_source),
+                package_version,
             }
             .execute(package_service)?;
         }

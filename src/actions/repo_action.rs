@@ -17,7 +17,7 @@ pub struct RepoRemoveAction {
 }
 
 impl Action for RepoAction {
-    fn execute(self, package_service: PackageService) -> Result<()> {
+    fn execute(self, _package_service: PackageService) -> Result<()> {
         let mut logger = Logger::new();
         logger.info("Initialized");
         let repo_list = HermioneConfig::load()?.repo_list();
