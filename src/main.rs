@@ -57,8 +57,9 @@ fn main() -> Result<()> {
             }
             .execute(package_service)?;
         }
-        ("list", _list_matches) => {
-            actions::list_action::ListAction {}.execute(package_service)?;
+        ("list", Some(list_matches)) => {
+            let list_available = list_matches.is_present("list_available");
+            actions::list_action::ListAction { list_available }.execute(package_service)?;
         }
         ("remove", Some(remove_matches)) => {
             let package_name = remove_matches

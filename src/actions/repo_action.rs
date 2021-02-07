@@ -17,7 +17,7 @@ pub struct RepoRemoveAction {
 }
 
 impl Action for RepoAction {
-    fn execute(self, _package_service: PackageService) -> Result<()> {
+    fn execute(self, package_service: PackageService) -> Result<()> {
         let mut logger = Logger::new();
         logger.info("Initialized");
         let repo_list = HermioneConfig::load()?.repo_list();
@@ -32,7 +32,7 @@ impl Action for RepoAction {
 }
 
 impl Action for RepoAddAction {
-    fn execute(self, _package_service: PackageService) -> Result<()> {
+    fn execute(self, package_service: PackageService) -> Result<()> {
         let mut logger = Logger::new();
         logger.info("Initialized");
 
@@ -49,7 +49,12 @@ impl Action for RepoAddAction {
         let packages = HermioneConfig::load()
             .wrap_err("Couldn't load Hermione Config")?
             .fetch_and_build_index()?;
-        println!("{:?}", packages);
+        logger.success(format!("Repo: ({}) Has been indexed", self.url));
+        let toml_byte_count = package_service
+            .persist_package_index(packages)
+            .wrap_err("Could not persist package index")?;
+        logger.info(format!("Wrote {} bytes to package index.", toml_byte_count));
+
         Ok(())
     }
 }

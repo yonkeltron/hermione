@@ -1,7 +1,7 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 pub fn get_matches() -> ArgMatches<'static> {
-  App::new("herm")
+    App::new("herm")
     .version(env!("CARGO_PKG_VERSION"))
     .author(env!("CARGO_PKG_AUTHORS"))
     .about(env!("CARGO_PKG_DESCRIPTION"))
@@ -40,7 +40,14 @@ pub fn get_matches() -> ArgMatches<'static> {
         .about("lists installed Hermione packages")
         .alias("ls")
         .version(env!("CARGO_PKG_VERSION"))
-        .author(env!("CARGO_PKG_AUTHORS")),
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .arg(
+            Arg::with_name("list_available")
+              .help("list available packages")
+              .takes_value(false)
+              .short("a")
+              .long("available")
+          ),
     )
     .subcommand(
       SubCommand::with_name("remove")
