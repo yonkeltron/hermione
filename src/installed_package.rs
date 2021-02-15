@@ -32,7 +32,7 @@ impl InstalledPackage {
             manifest_path.display(),
         ));
 
-        let manifest = Manifest::new_from_path(manifest_path)?;
+        let manifest = Manifest::new_from_path(&manifest_path)?;
 
         for mapping_definition in manifest.mappings {
             if mapping_definition.valid_platform_family() {
@@ -61,7 +61,7 @@ impl InstalledPackage {
     /// package have been successfully uninstalled.
     pub fn remove(self) -> Result<bool> {
         let manifest_path = self.local_path.join(Manifest::manifest_file_name());
-        let manifest = Manifest::new_from_path(manifest_path)?;
+        let manifest = Manifest::new_from_path(&manifest_path)?;
 
         let downloaded_package = self.uninstall()?;
         let mut logger = Logger::new();

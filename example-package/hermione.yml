@@ -4,7 +4,7 @@ authors:
   - J. Random Hacker
 description: My awesome example package
 id: org.hermione.example-package
-version: 0.1.0
+version: 0.2.0
 mappings:
   - i: a.txt
     o: "{{HOME}}/panda.txt"

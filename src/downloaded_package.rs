@@ -26,7 +26,7 @@ impl DownloadedPackage {
     pub fn install(self) -> Result<InstalledPackage> {
         let mut logger = Logger::new();
         let manifest_path = self.local_path.join(Manifest::manifest_file_name());
-        let manifest = Manifest::new_from_path(manifest_path)?;
+        let manifest = Manifest::new_from_path(&manifest_path)?;
         let package_id = manifest.id.clone();
         let mapping_render_results = manifest
             .mappings
@@ -137,7 +137,7 @@ impl DownloadedPackage {
     pub fn upgrade(self) -> Result<InstalledPackage> {
         let mut logger = Logger::new();
         let manifest_path = self.local_path.join(Manifest::manifest_file_name());
-        let manifest = Manifest::new_from_path(manifest_path)?;
+        let manifest = Manifest::new_from_path(&manifest_path)?;
         logger.loading(format!("Started upgrading {}", &manifest.name));
 
         let downloader =

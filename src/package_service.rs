@@ -15,6 +15,7 @@ use crate::downloader::Downloader;
 use crate::installed_package::InstalledPackage;
 use crate::manifest::Manifest;
 use crate::packer::Packer;
+use crate::repositories::package_index::PackageIndex;
 
 const QUALIFIER: &str = "dev";
 const ORGANIZATION: &str = "hermione";
@@ -125,7 +126,7 @@ impl PackageService {
     pub fn get_installed_package(self, package_id: String) -> Result<InstalledPackage> {
         let package_path = self.installed_package_path(&package_id)?;
         let manifest_path = package_path.join(Manifest::manifest_file_name());
-        let manifest = Manifest::new_from_path(manifest_path)?;
+        let manifest = Manifest::new_from_path(&manifest_path)?;
         Ok(InstalledPackage {
             local_path: package_path,
             manifest,
@@ -168,7 +169,7 @@ impl PackageService {
                     let local_path = entry.clone();
                     let manifest_path = local_path.join(Manifest::manifest_file_name());
 
-                    match Manifest::new_from_path(manifest_path) {
+                    match Manifest::new_from_path(&manifest_path) {
                         Ok(manifest) => Some(InstalledPackage {
                             local_path,
                             manifest,
@@ -249,7 +250,7 @@ impl PackageService {
                 logger.info(format!("Installing from directory {}", path.display()));
 
                 let manifest_path = path.join(Manifest::manifest_file_name());
-                let manifest = Manifest::new_from_path(manifest_path)?;
+                let manifest = Manifest::new_from_path(&manifest_path)?;
                 let download_package_dir = download_dir.join(manifest.id);
                 logger.info(format!(
                     "Copying Package {} -> {}",
@@ -300,23 +301,26 @@ impl PackageService {
     pub fn purge_installed_packages(&self) -> Result<()> {
         let mut logger = Logger::new();
         logger.info("Started removing all installed packages");
-        let errored_uninstalled = self
-            .list_installed_packages()?
-            .into_iter()
-            .map(|installed_package| {
-                logger.info(format!(
-                    "Removing package: {} @ {}",
-                    installed_package.manifest.id, installed_package.manifest.version
-                ));
-                installed_package.remove().unwrap_or(false)
-            })
-            .filter(|was_removed| !was_removed)
-            .collect::<Vec<bool>>();
-
-        if errored_uninstalled.is_empty() {
+        let list_of_installed_package = self.list_installed_packages()?;
+        if list_of_installed_package.is_empty() {
+            logger.info("Nothing to remove, done!");
             Ok(())
         } else {
-            Err(eyre!("Failed to uninstall all packages"))
+            let errored_uninstalled = list_of_installed_package
+                .into_iter()
+                .map(|installed_package| {
+                    logger.info(format!(
+                        "Removing package: {} @ {}",
+                        installed_package.manifest.id, installed_package.manifest.version
+                    ));
+                    installed_package.remove().unwrap_or(false)
+                })
+                .filter(|was_removed| !was_removed);
+            if errored_uninstalled.count() > 0 {
+                Err(eyre!("Failed to uninstall all packages"))
+            } else {
+                Ok(())
+            }
         }
     }
 
@@ -351,6 +355,22 @@ impl PackageService {
             fs::remove_dir_all(self.download_dir())?;
         }
         Ok(())
+    }
+
+    pub fn persist_package_index(&self, package_index: PackageIndex) -> Result<usize> {
+        let package_index_path = self.install_dir().join("index.toml");
+        let index_toml = toml::to_string_pretty(&package_index)?;
+        fs::write(package_index_path, &index_toml)?;
+
+        Ok(index_toml.len())
+    }
+
+    pub fn load_package_index(&self) -> Result<PackageIndex> {
+        let package_index_path = self.install_dir().join("index.toml");
+        let index_toml = fs::read_to_string(package_index_path)?;
+        let package_index: PackageIndex = toml::from_str(&index_toml)?;
+
+        Ok(package_index)
     }
 }
 

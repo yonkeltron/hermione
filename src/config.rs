@@ -1,17 +1,19 @@
-use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::eyre::{Result, WrapErr};
 use paris::Logger;
+use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 
+use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::repositories::repository_contents::RepositoryContents;
+use crate::repositories::package_index::PackageIndex;
+use crate::repositories::remote_repository::RemoteRepository;
 
 #[derive(Serialize, Deserialize)]
 pub struct HermioneConfig {
     repository_urls: Vec<String>,
 }
 
-/// `MyConfig` implements `Default`
 impl ::std::default::Default for HermioneConfig {
     fn default() -> Self {
         Self {
@@ -33,65 +35,58 @@ impl HermioneConfig {
         Ok(())
     }
 
-    pub fn available_repositories(&self) -> Result<Vec<RepositoryContents>> {
-        let client = reqwest::blocking::Client::builder()
-            .timeout(Duration::from_secs(7))
-            .build()?;
+    pub fn repo_list(&self) -> Vec<String> {
+        self.repository_urls.to_vec()
+    }
 
+    pub fn add_repo_url(self, repo_url: String) -> Self {
+        let mut repository_urls: Vec<String> = self
+            .repository_urls
+            .to_vec()
+            .into_iter()
+            .filter(|url| url.ne(&repo_url))
+            .collect();
+        repository_urls.push(repo_url);
+        Self { repository_urls }
+    }
+
+    pub fn remove_repo_url(self, repo_url: String) -> Self {
+        let repository_urls = self
+            .repository_urls
+            .to_vec()
+            .into_iter()
+            .filter(|url| url.ne(&repo_url))
+            .collect();
+        Self { repository_urls }
+    }
+
+    pub fn fetch_and_build_index(&self) -> Result<PackageIndex> {
+        let mut logger = Logger::new();
+        let client = Client::builder()
+            .timeout(Duration::from_secs(7))
+            .build()
+            .wrap_err("Failed to create Http client")?;
+
+        logger.loading("Indexing repositories");
         let available_repositories = self
             .repository_urls
             .iter()
-            .map(|repository_url| {
-                let mut logger = Logger::new();
-                logger.loading(format!("Fetching repository {}", repository_url));
-
-                let result = match client.get(repository_url).send() {
-                    Ok(response) => {
-                        if response.status().is_success() {
-                            match response.text() {
-                                Ok(text) => Ok(toml::from_str::<RepositoryContents>(&text)
-                                    .wrap_err_with(|| format!("Unable to deserialize TOML"))),
-                                Err(e) => {
-                                    Err(eyre!("Unable to decode response text to UTF-8: {}", e))
-                                }
-                            }
-                        } else {
-                            Err(eyre!(
-                                "HTTP request ({}) failed with status code {}",
-                                repository_url,
-                                response.status().as_str()
-                            ))
-                        }
-                    }
-                    Err(err) => Err(eyre!(
-                        "Unable to fetch repository file from server: {}",
-                        err
-                    )),
-                };
-
-                if result.is_ok() {
-                    logger.success(format!("Fetched repository from {}", repository_url));
-                } else {
-                    logger.warn(format!(
-                        "Failed to fetch repository from {}",
-                        repository_url
-                    ));
-                };
-
-                result
-            })
+            .map(|repository_url| RemoteRepository::new(repository_url))
             .filter(|res| res.is_ok())
-            .map(|ok_res| ok_res.unwrap());
-
-        let mut logger = Logger::new();
+            .map(|ok_res| ok_res.expect("Unable to instantiate remote repository"))
+            .map(|remote_respository| remote_respository.download_contents(&client));
 
         logger.info("Finished repository fetch attempt.");
 
-        let repos = available_repositories
+        logger.loading("Building package index...");
+        let combined_index = available_repositories
             .filter(|res| res.is_ok())
-            .map(|ok_res| ok_res.unwrap())
-            .collect::<Vec<RepositoryContents>>();
+            .map(|ok_res| ok_res.expect("Unable to build index from successful download"))
+            .map(|repository_contents| repository_contents.into_index())
+            .fold(HashMap::new(), |a, b| a.into_iter().chain(b).collect());
+        logger.info("Built package index.");
 
-        Ok(repos)
+        logger.success("Finished indexing repositories");
+        Ok(combined_index)
     }
 }
