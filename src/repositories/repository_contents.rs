@@ -12,7 +12,7 @@ pub struct RepositoryContents {
 }
 
 impl RepositoryContents {
-    pub fn to_index(self) -> PackageIndex {
+    pub fn into_index(self) -> PackageIndex {
         let mut index = HashMap::new();
 
         for available_package in self.available_packages {

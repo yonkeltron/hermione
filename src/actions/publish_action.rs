@@ -20,7 +20,7 @@ impl Action for PublishAction {
     fn execute(self, _package_service: PackageService) -> Result<()> {
         let url_prefix =
             Url::parse(&self.url_prefix).wrap_err("invalid or malformed prefix URL provided")?;
-        let repo_file_path = Path::new(&self.repo_file);
+        let _repo_file_path = Path::new(&self.repo_file);
         let packages_dir_path = Path::new(&self.packages_dir);
 
         if packages_dir_path.is_dir() {
@@ -28,7 +28,7 @@ impl Action for PublishAction {
             let glob_pattern = format!("{}/**/*.hpkg", packages_dir_path.display());
             let globs = glob(&glob_pattern)?;
 
-            let available_versions = globs
+            let _available_versions = globs
                 .into_iter()
                 .filter(|entry| entry.is_ok())
                 .map(|entry| entry.unwrap())

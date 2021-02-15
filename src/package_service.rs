@@ -126,7 +126,7 @@ impl PackageService {
     pub fn get_installed_package(self, package_id: String) -> Result<InstalledPackage> {
         let package_path = self.installed_package_path(&package_id)?;
         let manifest_path = package_path.join(Manifest::manifest_file_name());
-        let manifest = Manifest::new_from_path(manifest_path)?;
+        let manifest = Manifest::new_from_path(&manifest_path)?;
         Ok(InstalledPackage {
             local_path: package_path,
             manifest,
@@ -169,7 +169,7 @@ impl PackageService {
                     let local_path = entry.clone();
                     let manifest_path = local_path.join(Manifest::manifest_file_name());
 
-                    match Manifest::new_from_path(manifest_path) {
+                    match Manifest::new_from_path(&manifest_path) {
                         Ok(manifest) => Some(InstalledPackage {
                             local_path,
                             manifest,
@@ -250,7 +250,7 @@ impl PackageService {
                 logger.info(format!("Installing from directory {}", path.display()));
 
                 let manifest_path = path.join(Manifest::manifest_file_name());
-                let manifest = Manifest::new_from_path(manifest_path)?;
+                let manifest = Manifest::new_from_path(&manifest_path)?;
                 let download_package_dir = download_dir.join(manifest.id);
                 logger.info(format!(
                     "Copying Package {} -> {}",
@@ -301,23 +301,26 @@ impl PackageService {
     pub fn purge_installed_packages(&self) -> Result<()> {
         let mut logger = Logger::new();
         logger.info("Started removing all installed packages");
-        let errored_uninstalled = self
-            .list_installed_packages()?
-            .into_iter()
-            .map(|installed_package| {
-                logger.info(format!(
-                    "Removing package: {} @ {}",
-                    installed_package.manifest.id, installed_package.manifest.version
-                ));
-                installed_package.remove().unwrap_or(false)
-            })
-            .filter(|was_removed| !was_removed)
-            .collect::<Vec<bool>>();
-
-        if errored_uninstalled.is_empty() {
+        let list_of_installed_package = self.list_installed_packages()?;
+        if list_of_installed_package.is_empty() {
+            logger.info("Nothing to remove, done!");
             Ok(())
         } else {
-            Err(eyre!("Failed to uninstall all packages"))
+            let errored_uninstalled = list_of_installed_package
+                .into_iter()
+                .map(|installed_package| {
+                    logger.info(format!(
+                        "Removing package: {} @ {}",
+                        installed_package.manifest.id, installed_package.manifest.version
+                    ));
+                    installed_package.remove().unwrap_or(false)
+                })
+                .filter(|was_removed| !was_removed);
+            if errored_uninstalled.count() > 0 {
+                Err(eyre!("Failed to uninstall all packages"))
+            } else {
+                Ok(())
+            }
         }
     }
 

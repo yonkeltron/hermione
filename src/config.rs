@@ -47,10 +47,7 @@ impl HermioneConfig {
             .filter(|url| url.ne(&repo_url))
             .collect();
         repository_urls.push(repo_url);
-        Self {
-            repository_urls,
-            ..self
-        }
+        Self { repository_urls }
     }
 
     pub fn remove_repo_url(self, repo_url: String) -> Self {
@@ -60,10 +57,7 @@ impl HermioneConfig {
             .into_iter()
             .filter(|url| url.ne(&repo_url))
             .collect();
-        Self {
-            repository_urls,
-            ..self
-        }
+        Self { repository_urls }
     }
 
     pub fn fetch_and_build_index(&self) -> Result<PackageIndex> {
@@ -88,7 +82,7 @@ impl HermioneConfig {
         let combined_index = available_repositories
             .filter(|res| res.is_ok())
             .map(|ok_res| ok_res.expect("Unable to build index from successful download"))
-            .map(|repository_contents| repository_contents.to_index())
+            .map(|repository_contents| repository_contents.into_index())
             .fold(HashMap::new(), |a, b| a.into_iter().chain(b).collect());
         logger.info("Built package index.");
 

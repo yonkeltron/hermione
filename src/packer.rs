@@ -5,7 +5,6 @@ use flate2::Compression;
 use paris::Logger;
 use tar::{Archive, Builder};
 
-use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -64,7 +63,7 @@ impl Packer {
             let manifest_path = self.get_manifest_path_buf(&self.package_path_buf)?;
 
             logger.loading("Loading package manifest");
-            let manifest = Manifest::new_from_path(manifest_path.to_path_buf())?;
+            let manifest = Manifest::new_from_path(&manifest_path)?;
             logger.info("Loaded package manifest.").newline(1);
 
             // Create archive container for files
@@ -101,7 +100,12 @@ impl Packer {
                 "Added <blue>{}</> to package archive",
                 manifest_path
                     .file_name()
-                    .unwrap_or(OsStr::new(&Manifest::manifest_file_name().as_str()))
+                    .ok_or_else(|| {
+                        eyre!(
+                            "Unable to add {} to package archive",
+                            manifest_path.display()
+                        )
+                    })?
                     .to_string_lossy()
             ));
 

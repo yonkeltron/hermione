@@ -26,7 +26,7 @@ impl RemoteRepository {
                 if response.status().is_success() {
                     match response.text() {
                         Ok(text) => Ok(toml::from_str::<RepositoryContents>(&text)
-                            .wrap_err_with(|| format!("Unable to deserialize TOML"))),
+                            .wrap_err_with(|| String::from("Unable to deserialize TOML"))),
                         Err(e) => Err(eyre!("Unable to decode response text to UTF-8: {}", e)),
                     }
                 } else {

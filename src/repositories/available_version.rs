@@ -14,10 +14,12 @@ impl PartialOrd for AvailableVersion {
         let semver_version_opt = Version::parse(&self.version).ok();
         let other_semver_version_opt = Version::parse(&other.version).ok();
 
-        if semver_version_opt.is_some() && other_semver_version_opt.is_some() {
-            let semver_version = semver_version_opt.unwrap();
-            let other_semver_version = other_semver_version_opt.unwrap();
-            Some(semver_version.cmp(&other_semver_version))
+        if let Some(semver_version) = semver_version_opt {
+            if let Some(other_semver_version) = other_semver_version_opt {
+                Some(semver_version.cmp(&other_semver_version))
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -29,10 +31,12 @@ impl Ord for AvailableVersion {
         let semver_version_opt = Version::parse(&self.version).ok();
         let other_semver_version_opt = Version::parse(&other.version).ok();
 
-        if semver_version_opt.is_some() && other_semver_version_opt.is_some() {
-            let semver_version = semver_version_opt.unwrap();
-            let other_semver_version = other_semver_version_opt.unwrap();
-            semver_version.cmp(&other_semver_version)
+        if let Some(semver_version) = semver_version_opt {
+            if let Some(other_semver_version) = other_semver_version_opt {
+                semver_version.cmp(&other_semver_version)
+            } else {
+                Ordering::Equal
+            }
         } else {
             Ordering::Equal
         }
